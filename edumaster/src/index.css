@@ -28,7 +28,7 @@
 }
 
 body {
-    @apply text-foreground bg-background font-manrope py-8 px-16;
+    @apply text-foreground bg-background font-manrope;
 }
 
 h1,
