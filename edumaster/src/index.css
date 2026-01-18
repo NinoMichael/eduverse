@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@font-face {
+    font-family: "Manrope";
+    src: url("../src/assets/fonts/Manrope/static/Manrope-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Inter";
+    src: url("../src/assets/fonts/Inter/static/Inter_24pt-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@theme {
+    --font-manrope: "Manrope";
+    --font-inter: "Inter";
+
+    --color-background: oklch(0.9702 0 0);
+    --color-primary: oklch(0.7657 0.0589 61.57);
+    --color-secondary: oklch(0.8325 0.0362 65.92);
+    --color-foreground: oklch(0.2478 0 0);
+    --color-destructive: oklch(0.6418 0.1768 35.16);
+}
+
+body {
+    @apply text-foreground bg-background font-manrope py-8 px-16;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    @apply font-inter;
+}
