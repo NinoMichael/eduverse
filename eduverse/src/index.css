@@ -9,19 +9,27 @@
 	font-display: swap;
 }
 
-@theme {
-	--font-manrope: "Manrope";
-	--font-inter: "Inter";
+@font-face {
+	font-family: "Plus Jakarta Sans";
+	src: url("../src/assets/fonts/Jakarta/static/PlusJakartaSans-Regular.ttf")
+		format("truetype");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
 
-	--color-background: oklch(0.9702 0 0);
-	--color-primary: oklch(0.7657 0.0589 61.57);
-	--color-secondary: oklch(0.8325 0.0362 65.92);
-	--color-foreground: oklch(0.2478 0 0);
-	--color-destructive: oklch(0.6418 0.1768 35.16);
+@theme {
+	--breakpoint-xs: 450px;
+	--font-manrope: "Manrope";
+	--font-jakarta: "Plus Jakarta Sans";
+
+	--color-background: #fbfbfb;
+
+	--color-primary: #415e71;
 }
 
 body {
-	@apply text-foreground bg-background font-manrope;
+	@apply text-gray-700 text-sm bg-background font-jakarta;
 }
 
 h1,
@@ -31,4 +39,24 @@ h4,
 h5,
 h6 {
 	@apply font-manrope;
+}
+
+input {
+	@apply h-10 w-full border border-gray-300 rounded-md outline-primary/50 focus:ring-primary/50 px-3 transition-all;
+}
+
+select {
+	@apply h-10 w-full border border-gray-300 rounded-md outline-primary/50 focus:ring-primary/50 px-3 transition-all;
+}
+
+option {
+	@apply px-3 py-2 text-gray-700 font-jakarta text-sm bg-white 
+	       hover:bg-gray-100 
+	       focus:bg-blue-50 
+	       cursor-pointer 
+	       transition-colors duration-150;
+}
+
+button {
+	@apply p-3 font-semibold cursor-pointer hover:scale-105 transition-all w-full rounded-md;
 }

@@ -1,20 +1,46 @@
-<script lang="ts" setup>
-import Image from '../components/ui/Image.vue';
-import bgAuth from '../assets/images/bg-auth.png';
-</script>
-    
-<template>
-    <div class="flex flex-col md:flex-row w-full h-screen overflow-hidden">
-        <!-- Form section -->
-        <div class="flex-1 flex items-center justify-center p-8 md:p-16">
-            <router-view class="w-full max-w-md" />
-        </div>
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from "vue";
 
-        <!-- Image section -->
-        <div class="flex-1 hidden md:flex items-center justify-center p-4 md:p-8">
-            <Image :src="bgAuth" />
-        </div>
-    
-    </div>
+const containerRef = ref<HTMLDivElement | null>(null);
+const isOverflowing = ref(false);
+
+const checkOverflow = () => {
+	if (containerRef.value) {
+		isOverflowing.value =
+			containerRef.value.scrollHeight > containerRef.value.clientHeight ||
+			containerRef.value.scrollWidth > containerRef.value.clientWidth;
+	}
+};
+
+onMounted(() => {
+	checkOverflow();
+	window.addEventListener("resize", checkOverflow);
+});
+
+onUnmounted(() => {
+	window.removeEventListener("resize", checkOverflow);
+});
+</script>
+
+<template>
+	<div
+		ref="containerRef"
+		class="min-h-screen h-screen w-full flex justify-center items-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-background to-gray-100"
+	>
+		<div
+			class="w-full max-w-4xl mx-auto overflow-hidden"
+			:class="{ 'h-full flex flex-col': isOverflowing }"
+		>
+			<router-view class="flex-1" />
+		</div>
+	</div>
 </template>
-    
+
+<style scoped>
+@media (max-height: 600px) {
+	div[ref="containerRef"] {
+		align-items: flex-start;
+		padding-top: 1rem;
+	}
+}
+</style>
