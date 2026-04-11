@@ -3,40 +3,12 @@ import { computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores";
 import { useLayout } from "@/composables/useLayout";
+import { navItems } from "@/utils/menu";
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 const { sidebarState, toggleSidebar } = useLayout();
-
-interface NavItem {
-	label: string;
-	icon: string;
-	route: string;
-}
-
-const navItems: NavItem[] = [
-	{ label: "Accueil", icon: "home", route: "/dashboard" },
-	{ label: "Étudiants", icon: "user-graduate", route: "/dashboard/students" },
-	{
-		label: "Professeurs",
-		icon: "chalkboard-teacher",
-		route: "/dashboard/teachers",
-	},
-	{ label: "Classes", icon: "door-open", route: "/dashboard/classes" },
-	{
-		label: "Présences",
-		icon: "clipboard-check",
-		route: "/dashboard/attendance",
-	},
-	{ label: "Notes", icon: "chart-line", route: "/dashboard/grades" },
-	{
-		label: "Emplois du temps",
-		icon: "calendar-alt",
-		route: "/dashboard/schedule",
-	},
-	{ label: "Paramètres", icon: "cog", route: "/dashboard/settings" },
-];
 
 const activeRoute = computed(() => route.path);
 
@@ -52,16 +24,24 @@ const handleLogout = () => {
 		class="fixed left-0 top-0 h-screen bg-primary text-white flex flex-col z-40 transition-all duration-300"
 		:style="{ width: sidebarState.width + 'px' }"
 	>
-		<div class="p-4 flex items-center justify-between border-b border-white/10 min-h-16">
+		<div
+			class="p-4 flex items-center justify-between border-b border-white/10 min-h-16"
+		>
 			<button
 				class="flex items-center gap-3 hover:bg-white/10 rounded-lg p-2 -m-2 transition-colors cursor-pointer"
 				:class="{ 'justify-center w-full': sidebarState.isCollapsed }"
 				@click="toggleSidebar"
 			>
-				<div class="p-2 rounded-lg flex items-center justify-center bg-white/20">
+				<div
+					class="p-2 rounded-lg flex items-center justify-center bg-white/20"
+				>
 					<font-awesome-icon class="text-white" icon="graduation-cap" />
 				</div>
-				<span v-if="!sidebarState.isCollapsed" class="uppercase tracking-widest text-lg font-extrabold">eduverse</span>
+				<span
+					v-if="!sidebarState.isCollapsed"
+					class="uppercase tracking-widest text-lg font-extrabold"
+					>eduverse</span
+				>
 			</button>
 		</div>
 

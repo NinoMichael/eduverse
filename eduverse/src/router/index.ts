@@ -13,6 +13,8 @@ import Login from "@/views/auth/login.vue";
 import ActivateSoftware from "@/views/auth/activate-software.vue";
 
 import DashboardIndex from "@/views/dashboard/index.vue";
+import SchoolYearList from "@/views/dashboard/school-year/list.vue";
+
 import DashboardStudents from "@/views/dashboard/students.vue";
 import DashboardTeachers from "@/views/dashboard/teachers.vue";
 import DashboardClasses from "@/views/dashboard/classes.vue";
@@ -90,6 +92,11 @@ const routes: RouteRecordRaw[] = [
 				path: "",
 				name: "Dashboard",
 				component: DashboardIndex,
+			},
+			{
+				path: "school-year/list",
+				name: "ListSchoolYears",
+				component: SchoolYearList,
 			},
 			{
 				path: "students",

@@ -6,6 +6,9 @@ import { activationService, type LicenseData, type ActivationResponse } from "./
 import { dashboardService } from "./dashboard.service";
 import { mockDashboardService } from "./mock/dashboard.service";
 import type { DashboardData } from "@/types/dashboard";
+import { schoolYearService } from "./school-year.service";
+import { mockSchoolYearService } from "./mock/school-year.service";
+import type { SchoolYear, SchoolYearFormData } from "@/types/school-year";
 
 const useMockServices = !isRunningInTauri();
 
@@ -66,8 +69,53 @@ class UnifiedActivationService {
 	}
 }
 
+class UnifiedSchoolYearService {
+	async getSchoolYears(schoolId: string): Promise<ApiResponse<SchoolYear[]>> {
+		if (useMockServices) {
+			return mockSchoolYearService.getSchoolYears(schoolId);
+		}
+		return schoolYearService.getSchoolYears(schoolId);
+	}
+
+	async createSchoolYear(schoolId: string, data: SchoolYearFormData): Promise<ApiResponse<SchoolYear>> {
+		if (useMockServices) {
+			return mockSchoolYearService.createSchoolYear(schoolId, data);
+		}
+		return schoolYearService.createSchoolYear(schoolId, data);
+	}
+
+	async updateSchoolYear(id: string, data: SchoolYearFormData): Promise<ApiResponse<SchoolYear>> {
+		if (useMockServices) {
+			return mockSchoolYearService.updateSchoolYear(id, data);
+		}
+		return schoolYearService.updateSchoolYear(id, data);
+	}
+
+	async setActiveSchoolYear(id: string, schoolId: string): Promise<ApiResponse<SchoolYear>> {
+		if (useMockServices) {
+			return mockSchoolYearService.setActiveSchoolYear(id, schoolId);
+		}
+		return schoolYearService.setActiveSchoolYear(id, schoolId);
+	}
+
+	async closeSchoolYear(id: string): Promise<ApiResponse<SchoolYear>> {
+		if (useMockServices) {
+			return mockSchoolYearService.closeSchoolYear(id);
+		}
+		return schoolYearService.closeSchoolYear(id);
+	}
+
+	async deleteSchoolYear(id: string): Promise<ApiResponse<void>> {
+		if (useMockServices) {
+			return mockSchoolYearService.deleteSchoolYear(id);
+		}
+		return schoolYearService.deleteSchoolYear(id);
+	}
+}
+
 export const unifiedAuthService = new UnifiedAuthService();
 export const unifiedDashboardService = new UnifiedDashboardService();
 export const unifiedActivationService = new UnifiedActivationService();
+export const unifiedSchoolYearService = new UnifiedSchoolYearService();
 
 export const isDebugMode = useMockServices;

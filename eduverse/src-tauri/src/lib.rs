@@ -1,6 +1,6 @@
 mod db;
 
-use db::models::{AuthResponse, DashboardData, LoginCredentials, RegisterPayload};
+use db::models::{AuthResponse, DashboardData, LoginCredentials, RegisterPayload, SchoolYear};
 use db::repository;
 
 #[tauri::command]
@@ -26,6 +26,46 @@ fn check_session() -> Result<AuthResponse, String> {
 #[tauri::command]
 fn get_dashboard_data(school_id: String) -> Result<DashboardData, String> {
     repository::handle_get_dashboard_data(&school_id)
+}
+
+#[tauri::command]
+fn get_school_years(school_id: String) -> Result<Vec<SchoolYear>, String> {
+    repository::handle_get_school_years(&school_id)
+}
+
+#[tauri::command]
+fn create_school_year(
+    school_id: String,
+    name: String,
+    start_date: String,
+    end_date: String,
+) -> Result<SchoolYear, String> {
+    repository::handle_create_school_year(&school_id, &name, &start_date, &end_date)
+}
+
+#[tauri::command]
+fn update_school_year(
+    id: String,
+    name: String,
+    start_date: String,
+    end_date: String,
+) -> Result<SchoolYear, String> {
+    repository::handle_update_school_year(&id, &name, &start_date, &end_date)
+}
+
+#[tauri::command]
+fn set_active_school_year(id: String, school_id: String) -> Result<SchoolYear, String> {
+    repository::handle_set_active_school_year(&id, &school_id)
+}
+
+#[tauri::command]
+fn close_school_year(id: String) -> Result<SchoolYear, String> {
+    repository::handle_close_school_year(&id)
+}
+
+#[tauri::command]
+fn delete_school_year(id: String) -> Result<(), String> {
+    repository::handle_delete_school_year(&id)
 }
 
 #[tauri::command]
@@ -56,6 +96,12 @@ pub fn run() {
             logout,
             check_session,
             get_dashboard_data,
+            get_school_years,
+            create_school_year,
+            update_school_year,
+            set_active_school_year,
+            close_school_year,
+            delete_school_year,
             validate_license,
             validate_license_local
         ])

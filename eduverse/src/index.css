@@ -58,5 +58,9 @@ option {
 }
 
 button {
-	@apply p-3 font-semibold cursor-pointer hover:scale-105 transition-all w-full rounded-md;
+	@apply p-3 font-semibold cursor-pointer hover:scale-105 transition-all rounded-md;
+}
+
+.tab-active {
+	@apply bg-primary text-white;
 }

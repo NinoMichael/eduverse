@@ -51,6 +51,9 @@ import {
 	faCalendarWeek,
 	faUsers,
 	faHouse,
+	faPlusCircle,
+	faEllipsisV,
+	faCalendarCheck,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -96,7 +99,10 @@ library.add(
 	faCalendarWeek,
 	faUsers,
 	faClock,
-	faHouse
+	faHouse,
+	faPlusCircle,
+	faEllipsisV,
+	faCalendarCheck
 );
 
 const app = createApp(App);

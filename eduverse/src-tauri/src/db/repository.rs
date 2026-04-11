@@ -3,7 +3,7 @@ use crate::db::models::{
     DashboardStats, LoginCredentials, RegisterPayload, ScheduleItem, School, SchoolYear, User,
 };
 use crate::db::with_db;
-use chrono::Utc;
+use chrono::{Datelike, NaiveDate, Utc};
 use rusqlite::{params, OptionalExtension};
 
 pub fn create_school(name: &str, address: &str, school_type: &str) -> Result<School, String> {
@@ -259,4 +259,259 @@ pub fn handle_get_dashboard_data(school_id: &str) -> Result<DashboardData, Strin
         school_year,
         schedules,
     })
+}
+
+fn determine_school_year_status(start_date: &str, end_date: &str) -> &'static str {
+    let today = Utc::now().date_naive();
+
+    if let (Ok(start), Ok(end)) = (
+        NaiveDate::parse_from_str(start_date, "%Y-%m-%d"),
+        NaiveDate::parse_from_str(end_date, "%Y-%m-%d"),
+    ) {
+        if today < start {
+            "planned"
+        } else if today >= start && today <= end {
+            "in_progress"
+        } else {
+            "closed"
+        }
+    } else {
+        "planned"
+    }
+}
+
+pub fn get_school_years(school_id: &str) -> Result<Vec<SchoolYear>, String> {
+    with_db(|conn| {
+        let mut stmt = conn.prepare(
+            "SELECT id, name, start_date, end_date, is_active, school_id, created_at 
+             FROM school_years 
+             WHERE school_id = ?1 
+             ORDER BY start_date DESC",
+        )?;
+
+        let years = stmt
+            .query_map(params![school_id], |row| {
+                Ok(SchoolYear {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    start_date: row.get(2)?,
+                    end_date: row.get(3)?,
+                    is_active: row.get::<_, i32>(4)? == 1,
+                    school_id: row.get(5)?,
+                    created_at: row.get(6)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(years)
+    })
+}
+
+pub fn get_school_year_by_id(id: &str) -> Result<Option<SchoolYear>, String> {
+    with_db(|conn| {
+        let mut stmt = conn.prepare(
+            "SELECT id, name, start_date, end_date, is_active, school_id, created_at 
+             FROM school_years 
+             WHERE id = ?1",
+        )?;
+
+        let year = stmt
+            .query_row(params![id], |row| {
+                Ok(SchoolYear {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    start_date: row.get(2)?,
+                    end_date: row.get(3)?,
+                    is_active: row.get::<_, i32>(4)? == 1,
+                    school_id: row.get(5)?,
+                    created_at: row.get(6)?,
+                })
+            })
+            .optional()?;
+
+        Ok(year)
+    })
+}
+
+pub fn create_school_year(
+    school_id: &str,
+    name: &str,
+    start_date: &str,
+    end_date: &str,
+) -> Result<SchoolYear, String> {
+    let id = generate_id();
+    let created_at = current_timestamp();
+
+    with_db(|conn| {
+        conn.execute(
+            "INSERT INTO school_years (id, name, start_date, end_date, is_active, school_id, created_at) 
+             VALUES (?1, ?2, ?3, ?4, 0, ?5, ?6)",
+            params![id, name, start_date, end_date, school_id, created_at],
+        )?;
+
+        Ok(SchoolYear {
+            id,
+            name: name.to_string(),
+            start_date: start_date.to_string(),
+            end_date: end_date.to_string(),
+            is_active: false,
+            school_id: school_id.to_string(),
+            created_at,
+        })
+    })
+}
+
+pub fn update_school_year(
+    id: &str,
+    name: &str,
+    start_date: &str,
+    end_date: &str,
+) -> Result<SchoolYear, String> {
+    with_db(|conn| {
+        let rows = conn.execute(
+            "UPDATE school_years SET name = ?1, start_date = ?2, end_date = ?3 WHERE id = ?4",
+            params![name, start_date, end_date, id],
+        )?;
+
+        if rows == 0 {
+            return Err("Année scolaire non trouvée".to_string());
+        }
+
+        let mut stmt = conn.prepare(
+            "SELECT id, name, start_date, end_date, is_active, school_id, created_at 
+             FROM school_years 
+             WHERE id = ?1",
+        )?;
+
+        let year = stmt.query_row(params![id], |row| {
+            Ok(SchoolYear {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                start_date: row.get(2)?,
+                end_date: row.get(3)?,
+                is_active: row.get::<_, i32>(4)? == 1,
+                school_id: row.get(5)?,
+                created_at: row.get(6)?,
+            })
+        })?;
+
+        Ok(year)
+    })
+}
+
+pub fn set_active_school_year(id: &str, school_id: &str) -> Result<SchoolYear, String> {
+    with_db(|conn| {
+        conn.execute(
+            "UPDATE school_years SET is_active = 0 WHERE school_id = ?1",
+            params![school_id],
+        )?;
+
+        let rows = conn.execute(
+            "UPDATE school_years SET is_active = 1 WHERE id = ?1",
+            params![id],
+        )?;
+
+        if rows == 0 {
+            return Err("Année scolaire non trouvée".to_string());
+        }
+
+        let mut stmt = conn.prepare(
+            "SELECT id, name, start_date, end_date, is_active, school_id, created_at 
+             FROM school_years 
+             WHERE id = ?1",
+        )?;
+
+        let year = stmt.query_row(params![id], |row| {
+            Ok(SchoolYear {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                start_date: row.get(2)?,
+                end_date: row.get(3)?,
+                is_active: row.get::<_, i32>(4)? == 1,
+                school_id: row.get(5)?,
+                created_at: row.get(6)?,
+            })
+        })?;
+
+        Ok(year)
+    })
+}
+
+pub fn close_school_year(id: &str) -> Result<SchoolYear, String> {
+    with_db(|conn| {
+        let rows = conn.execute(
+            "UPDATE school_years SET is_active = 0 WHERE id = ?1",
+            params![id],
+        )?;
+
+        if rows == 0 {
+            return Err("Année scolaire non trouvée".to_string());
+        }
+
+        let mut stmt = conn.prepare(
+            "SELECT id, name, start_date, end_date, is_active, school_id, created_at 
+             FROM school_years 
+             WHERE id = ?1",
+        )?;
+
+        let year = stmt.query_row(params![id], |row| {
+            Ok(SchoolYear {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                start_date: row.get(2)?,
+                end_date: row.get(3)?,
+                is_active: row.get::<_, i32>(4)? == 1,
+                school_id: row.get(5)?,
+                created_at: row.get(6)?,
+            })
+        })?;
+
+        Ok(year)
+    })
+}
+
+pub fn delete_school_year(id: &str) -> Result<(), String> {
+    with_db(|conn| {
+        let rows = conn.execute("DELETE FROM school_years WHERE id = ?1", params![id])?;
+
+        if rows == 0 {
+            return Err("Année scolaire non trouvée".to_string());
+        }
+
+        Ok(())
+    })
+}
+
+pub fn handle_get_school_years(school_id: &str) -> Result<Vec<SchoolYear>, String> {
+    get_school_years(school_id)
+}
+
+pub fn handle_create_school_year(
+    school_id: &str,
+    name: &str,
+    start_date: &str,
+    end_date: &str,
+) -> Result<SchoolYear, String> {
+    create_school_year(school_id, name, start_date, end_date)
+}
+
+pub fn handle_update_school_year(
+    id: &str,
+    name: &str,
+    start_date: &str,
+    end_date: &str,
+) -> Result<SchoolYear, String> {
+    update_school_year(id, name, start_date, end_date)
+}
+
+pub fn handle_set_active_school_year(id: &str, school_id: &str) -> Result<SchoolYear, String> {
+    set_active_school_year(id, school_id)
+}
+
+pub fn handle_close_school_year(id: &str) -> Result<SchoolYear, String> {
+    close_school_year(id)
+}
+
+pub fn handle_delete_school_year(id: &str) -> Result<(), String> {
+    delete_school_year(id)
 }

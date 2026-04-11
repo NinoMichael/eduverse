@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { useAuthStore } from "@/stores";
 import { useRouter, useRoute } from "vue-router";
 import { useLayout } from "@/composables/useLayout";
+import { navItems } from "@/utils/menu";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -14,35 +15,6 @@ const showUserMenu = ref(false);
 const showMobileMenu = ref(false);
 
 const activeRoute = computed(() => route.path);
-
-interface NavItem {
-	label: string;
-	icon: string;
-	route: string;
-}
-
-const navItems: NavItem[] = [
-	{ label: "Accueil", icon: "home", route: "/dashboard" },
-	{ label: "Étudiants", icon: "user-graduate", route: "/dashboard/students" },
-	{
-		label: "Professeurs",
-		icon: "chalkboard-teacher",
-		route: "/dashboard/teachers",
-	},
-	{ label: "Classes", icon: "door-open", route: "/dashboard/classes" },
-	{
-		label: "Présences",
-		icon: "clipboard-check",
-		route: "/dashboard/attendance",
-	},
-	{ label: "Notes", icon: "chart-line", route: "/dashboard/grades" },
-	{
-		label: "Emplois du temps",
-		icon: "calendar-alt",
-		route: "/dashboard/schedule",
-	},
-	{ label: "Paramètres", icon: "cog", route: "/dashboard/settings" },
-];
 
 const toggleUserMenu = () => {
 	showUserMenu.value = !showUserMenu.value;
