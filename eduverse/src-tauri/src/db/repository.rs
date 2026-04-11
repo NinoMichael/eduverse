@@ -1,8 +1,9 @@
 use crate::db::models::{
-    current_timestamp, generate_id, generate_token, hash_password, AuthResponse, ClassLevel,
-    DashboardData, DashboardStats, LoginCredentials, RegisterPayload, School, Student, User,
+    current_timestamp, generate_id, generate_token, hash_password, AuthResponse, DashboardData,
+    DashboardStats, LoginCredentials, RegisterPayload, ScheduleItem, School, SchoolYear, User,
 };
 use crate::db::with_db;
+use chrono::Utc;
 use rusqlite::{params, OptionalExtension};
 
 pub fn create_school(name: &str, address: &str, school_type: &str) -> Result<School, String> {
@@ -147,33 +148,29 @@ pub fn handle_register(payload: RegisterPayload) -> Result<AuthResponse, String>
     })
 }
 
-pub fn get_students_by_school(school_id: &str) -> Result<Vec<Student>, String> {
+fn get_active_school_year(school_id: &str) -> Result<Option<SchoolYear>, String> {
     with_db(|conn| {
         let mut stmt = conn.prepare(
-            "SELECT id, first_name, last_name, class_id, level, attendance_status, created_at 
-             FROM students WHERE school_id = ?1 ORDER BY created_at DESC LIMIT 10",
+            "SELECT id, name, start_date, end_date, is_active FROM school_years WHERE school_id = ?1 AND is_active = 1"
         )?;
 
-        let students = stmt
-            .query_map(params![school_id], |row| {
-                Ok(Student {
+        let school_year = stmt
+            .query_row(params![school_id], |row| {
+                Ok(SchoolYear {
                     id: row.get(0)?,
-                    first_name: row.get(1)?,
-                    last_name: row.get(2)?,
-                    class_id: row.get(3)?,
-                    level: row.get(4)?,
-                    attendance_status: row.get(5)?,
-                    created_at: row.get(6)?,
+                    name: row.get(1)?,
+                    start_date: row.get(2)?,
+                    end_date: row.get(3)?,
+                    is_active: row.get::<_, i32>(4)? == 1,
                 })
-            })?
-            .collect::<Result<Vec<_>, _>>()?;
+            })
+            .optional()?;
 
-        Ok(students)
+        Ok(school_year)
     })
 }
 
-#[allow(dead_code)]
-pub fn get_student_count(school_id: &str) -> Result<i32, String> {
+fn count_students(school_id: &str) -> Result<i32, String> {
     with_db(|conn| {
         let count: i32 = conn.query_row(
             "SELECT COUNT(*) FROM students WHERE school_id = ?1",
@@ -184,149 +181,82 @@ pub fn get_student_count(school_id: &str) -> Result<i32, String> {
     })
 }
 
-#[allow(dead_code)]
-pub fn get_attendance_stats(school_id: &str) -> Result<(i32, i32, i32), String> {
+fn count_classes(school_id: &str) -> Result<i32, String> {
     with_db(|conn| {
-        let present: i32 = conn.query_row(
-            "SELECT COUNT(*) FROM students WHERE school_id = ?1 AND attendance_status = 'present'",
+        let count: i32 = conn.query_row(
+            "SELECT COUNT(*) FROM classes WHERE school_id = ?1",
             params![school_id],
             |row| row.get(0),
         )?;
-
-        let absent: i32 = conn.query_row(
-            "SELECT COUNT(*) FROM students WHERE school_id = ?1 AND attendance_status = 'absent'",
-            params![school_id],
-            |row| row.get(0),
-        )?;
-
-        let late: i32 = conn.query_row(
-            "SELECT COUNT(*) FROM students WHERE school_id = ?1 AND attendance_status = 'late'",
-            params![school_id],
-            |row| row.get(0),
-        )?;
-
-        Ok((present, absent, late))
+        Ok(count)
     })
 }
 
-#[allow(dead_code)]
-pub fn get_level_distribution(school_id: &str) -> Result<Vec<ClassLevel>, String> {
+fn count_teachers(school_id: &str) -> Result<i32, String> {
+    with_db(|conn| {
+        let count: i32 = conn.query_row(
+            "SELECT COUNT(*) FROM teachers WHERE school_id = ?1",
+            params![school_id],
+            |row| row.get(0),
+        )?;
+        Ok(count)
+    })
+}
+
+fn get_today_schedules(school_id: &str) -> Result<Vec<ScheduleItem>, String> {
+    let day_of_week = Utc::now()
+        .format("%u")
+        .to_string()
+        .parse::<i32>()
+        .unwrap_or(1);
+
     with_db(|conn| {
         let mut stmt = conn.prepare(
-            "SELECT level, COUNT(*) as count FROM students WHERE school_id = ?1 GROUP BY level",
+            "SELECT s.id, c.name, t.first_name || ' ' || t.last_name, s.subject, s.start_time, s.end_time, s.day_of_week
+             FROM schedules s
+             JOIN classes c ON s.class_id = c.id
+             JOIN teachers t ON s.teacher_id = t.id
+             WHERE c.school_id = ?1 AND s.day_of_week = ?2
+             ORDER BY s.start_time"
         )?;
 
-        let levels = stmt
-            .query_map(params![school_id], |row| {
-                let level: String = row.get(0)?;
-                let count: i32 = row.get(1)?;
-
-                let color = match level.as_str() {
-                    "Préscolaire" => "#3B82F6",
-                    "Primaire" => "#10B981",
-                    "Collège" => "#F59E0B",
-                    "Lycée" => "#8B5CF6",
-                    _ => "#6B7280",
-                };
-
-                Ok(ClassLevel {
-                    name: level,
-                    student_count: count,
-                    color: color.to_string(),
+        let schedules = stmt
+            .query_map(params![school_id, day_of_week], |row| {
+                Ok(ScheduleItem {
+                    id: row.get(0)?,
+                    class_name: row.get(1)?,
+                    teacher_name: row.get(2)?,
+                    subject: row.get(3)?,
+                    start_time: row.get(4)?,
+                    end_time: row.get(5)?,
+                    day_of_week: row.get(6)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(levels)
+        Ok(schedules)
     })
 }
 
-pub fn handle_get_dashboard_data() -> Result<DashboardData, String> {
-    let _students = get_students_by_school("default")?;
-    let total = 320;
-    let (present, absent, late) = (289, 31, 12);
+pub fn handle_get_dashboard_data(school_id: &str) -> Result<DashboardData, String> {
+    let school_year = get_active_school_year(school_id)?;
+    let total_students = count_students(school_id)?;
+    let total_classes = count_classes(school_id)?;
+    let total_teachers = count_teachers(school_id)?;
+    let schedules = get_today_schedules(school_id)?;
+
+    let current_year = school_year.as_ref().map(|y| y.name.clone());
 
     let stats = DashboardStats {
-        total_students: total,
-        present_students: present,
-        absent_students: absent,
-        late_students: late,
+        current_year,
+        total_students,
+        total_classes,
+        total_teachers,
     };
-
-    let level_distribution = vec![
-        ClassLevel {
-            name: "Préscolaire".to_string(),
-            student_count: 45,
-            color: "#3B82F6".to_string(),
-        },
-        ClassLevel {
-            name: "Primaire".to_string(),
-            student_count: 120,
-            color: "#10B981".to_string(),
-        },
-        ClassLevel {
-            name: "Collège".to_string(),
-            student_count: 95,
-            color: "#F59E0B".to_string(),
-        },
-        ClassLevel {
-            name: "Lycée".to_string(),
-            student_count: 60,
-            color: "#8B5CF6".to_string(),
-        },
-    ];
-
-    let recent_students = vec![
-        Student {
-            id: "1".to_string(),
-            first_name: "Marie".to_string(),
-            last_name: "Dupont".to_string(),
-            class_id: "6eme-a".to_string(),
-            level: "Collège".to_string(),
-            attendance_status: "present".to_string(),
-            created_at: current_timestamp(),
-        },
-        Student {
-            id: "2".to_string(),
-            first_name: "Jean".to_string(),
-            last_name: "Martin".to_string(),
-            class_id: "cm2".to_string(),
-            level: "Primaire".to_string(),
-            attendance_status: "present".to_string(),
-            created_at: current_timestamp(),
-        },
-        Student {
-            id: "3".to_string(),
-            first_name: "Sophie".to_string(),
-            last_name: "Bernard".to_string(),
-            class_id: "terminale-s".to_string(),
-            level: "Lycée".to_string(),
-            attendance_status: "late".to_string(),
-            created_at: current_timestamp(),
-        },
-        Student {
-            id: "4".to_string(),
-            first_name: "Lucas".to_string(),
-            last_name: "Petit".to_string(),
-            class_id: "cp".to_string(),
-            level: "Primaire".to_string(),
-            attendance_status: "absent".to_string(),
-            created_at: current_timestamp(),
-        },
-        Student {
-            id: "5".to_string(),
-            first_name: "Emma".to_string(),
-            last_name: "Moreau".to_string(),
-            class_id: "maternelle".to_string(),
-            level: "Préscolaire".to_string(),
-            attendance_status: "present".to_string(),
-            created_at: current_timestamp(),
-        },
-    ];
 
     Ok(DashboardData {
         stats,
-        recent_students,
-        level_distribution,
+        school_year,
+        schedules,
     })
 }

@@ -40,11 +40,11 @@ class UnifiedAuthService {
 }
 
 class UnifiedDashboardService {
-	async getDashboardData(): Promise<ApiResponse<DashboardData>> {
+	async getDashboardData(schoolId: string): Promise<ApiResponse<DashboardData>> {
 		if (useMockServices) {
-			return mockDashboardService.getDashboardData();
+			return mockDashboardService.getDashboardData(schoolId);
 		}
-		return dashboardService.getDashboardData();
+		return dashboardService.getDashboardData(schoolId);
 	}
 }
 

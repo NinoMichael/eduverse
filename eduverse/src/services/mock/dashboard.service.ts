@@ -2,67 +2,48 @@ import type { ApiResponse } from "../auth.service";
 import type { DashboardData } from "@/types/dashboard";
 
 const generateDashboardData = (): DashboardData => {
-	const now = new Date().toISOString();
-
 	return {
 		stats: {
+			currentYear: "2025-2026",
 			totalStudents: 320,
-			presentStudents: 289,
-			absentStudents: 31,
-			lateStudents: 12,
+			totalClasses: 18,
+			totalTeachers: 25,
 		},
-		recentStudents: [
+		schoolYear: {
+			id: "1",
+			name: "2025-2026",
+			startDate: "2025-09-01",
+			endDate: "2026-06-30",
+			isActive: true,
+		},
+		schedules: [
 			{
 				id: "1",
-				firstName: "Marie",
-				lastName: "Dupont",
 				className: "6ème A",
-				level: "Collège",
-				attendanceStatus: "present",
-				createdAt: now,
+				teacherName: "Marie Dupont",
+				subject: "Mathématiques",
+				startTime: "08:00",
+				endTime: "09:00",
+				dayOfWeek: 5,
 			},
 			{
 				id: "2",
-				firstName: "Jean",
-				lastName: "Martin",
 				className: "CM2",
-				level: "Primaire",
-				attendanceStatus: "present",
-				createdAt: now,
+				teacherName: "Jean Martin",
+				subject: "Français",
+				startTime: "09:15",
+				endTime: "10:15",
+				dayOfWeek: 5,
 			},
 			{
 				id: "3",
-				firstName: "Sophie",
-				lastName: "Bernard",
 				className: "Terminale S",
-				level: "Lycée",
-				attendanceStatus: "late",
-				createdAt: now,
+				teacherName: "Sophie Bernard",
+				subject: "Physique-Chimie",
+				startTime: "10:30",
+				endTime: "11:30",
+				dayOfWeek: 5,
 			},
-			{
-				id: "4",
-				firstName: "Lucas",
-				lastName: "Petit",
-				className: "CP",
-				level: "Primaire",
-				attendanceStatus: "absent",
-				createdAt: now,
-			},
-			{
-				id: "5",
-				firstName: "Emma",
-				lastName: "Moreau",
-				className: "Maternelle",
-				level: "Préscolaire",
-				attendanceStatus: "present",
-				createdAt: now,
-			},
-		],
-		levelDistribution: [
-			{ name: "Préscolaire", studentCount: 45, color: "#3B82F6" },
-			{ name: "Primaire", studentCount: 120, color: "#10B981" },
-			{ name: "Collège", studentCount: 95, color: "#F59E0B" },
-			{ name: "Lycée", studentCount: 60, color: "#8B5CF6" },
 		],
 	};
 };
@@ -70,7 +51,7 @@ const generateDashboardData = (): DashboardData => {
 export class MockDashboardService {
 	private cachedData: DashboardData | null = null;
 
-	async getDashboardData(): Promise<ApiResponse<DashboardData>> {
+	async getDashboardData(_schoolId: string): Promise<ApiResponse<DashboardData>> {
 		try {
 			if (!this.cachedData) {
 				this.cachedData = generateDashboardData();

@@ -1,28 +1,30 @@
 export interface DashboardStats {
+	currentYear: string | null;
 	totalStudents: number;
-	presentStudents: number;
-	absentStudents: number;
-	lateStudents: number;
+	totalClasses: number;
+	totalTeachers: number;
 }
 
-export interface Student {
+export interface SchoolYear {
 	id: string;
-	firstName: string;
-	lastName: string;
-	className: string;
-	level: string;
-	attendanceStatus: "present" | "absent" | "late";
-	createdAt: string;
+	name: string;
+	startDate: string;
+	endDate: string;
+	isActive: boolean;
 }
 
-export interface ClassLevel {
-	name: string;
-	studentCount: number;
-	color: string;
+export interface ScheduleItem {
+	id: string;
+	className: string;
+	teacherName: string;
+	subject: string;
+	startTime: string;
+	endTime: string;
+	dayOfWeek: number;
 }
 
 export interface DashboardData {
 	stats: DashboardStats;
-	recentStudents: Student[];
-	levelDistribution: ClassLevel[];
+	schoolYear: SchoolYear | null;
+	schedules: ScheduleItem[];
 }

@@ -98,8 +98,7 @@ pub struct Student {
     pub first_name: String,
     pub last_name: String,
     pub class_id: String,
-    pub level: String,
-    pub attendance_status: String,
+    pub school_id: String,
     pub created_at: String,
 }
 
@@ -113,27 +112,51 @@ pub struct Class {
     pub created_at: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct DashboardStats {
-    pub total_students: i32,
-    pub present_students: i32,
-    pub absent_students: i32,
-    pub late_students: i32,
+pub struct SchoolYear {
+    pub id: String,
+    pub name: String,
+    pub start_date: String,
+    pub end_date: String,
+    pub is_active: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Teacher {
+    pub id: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub email: Option<String>,
+    pub phone: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ScheduleItem {
+    pub id: String,
+    pub class_name: String,
+    pub teacher_name: String,
+    pub subject: String,
+    pub start_time: String,
+    pub end_time: String,
+    pub day_of_week: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ClassLevel {
-    pub name: String,
-    pub student_count: i32,
-    pub color: String,
+pub struct DashboardStats {
+    pub current_year: Option<String>,
+    pub total_students: i32,
+    pub total_classes: i32,
+    pub total_teachers: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DashboardData {
     pub stats: DashboardStats,
-    pub recent_students: Vec<Student>,
-    pub level_distribution: Vec<ClassLevel>,
+    pub school_year: Option<SchoolYear>,
+    pub schedules: Vec<ScheduleItem>,
 }

@@ -24,8 +24,8 @@ fn check_session() -> Result<AuthResponse, String> {
 }
 
 #[tauri::command]
-fn get_dashboard_data() -> Result<DashboardData, String> {
-    repository::handle_get_dashboard_data()
+fn get_dashboard_data(school_id: String) -> Result<DashboardData, String> {
+    repository::handle_get_dashboard_data(&school_id)
 }
 
 #[tauri::command]

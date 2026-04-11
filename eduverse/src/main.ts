@@ -47,6 +47,10 @@ import {
 	faInbox,
 	faClock,
 	faTimesCircle,
+	faTriangleCircleSquare,
+	faCalendarWeek,
+	faUsers,
+	faHouse,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -87,7 +91,12 @@ library.add(
 	faUserCircle,
 	faInbox,
 	faClock,
-	faTimesCircle
+	faTimesCircle,
+	faTriangleCircleSquare,
+	faCalendarWeek,
+	faUsers,
+	faClock,
+	faHouse
 );
 
 const app = createApp(App);
