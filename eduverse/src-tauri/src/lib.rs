@@ -1,6 +1,6 @@
 mod db;
 
-use db::models::{LoginCredentials, RegisterPayload, AuthResponse};
+use db::models::{AuthResponse, DashboardData, LoginCredentials, RegisterPayload};
 use db::repository;
 
 #[tauri::command]
@@ -23,6 +23,27 @@ fn check_session() -> Result<AuthResponse, String> {
     Err("No active session".to_string())
 }
 
+#[tauri::command]
+fn get_dashboard_data() -> Result<DashboardData, String> {
+    repository::handle_get_dashboard_data()
+}
+
+#[tauri::command]
+fn validate_license(_public_key: String, private_key: String) -> Result<bool, String> {
+    let valid_keys = ["DEMO-2024-ABCD", "TEST-KEY-1234", "EDUVERSE-PRO-2024"];
+    Ok(valid_keys.contains(&private_key.as_str()))
+}
+
+#[tauri::command]
+fn validate_license_local(
+    _public_key: String,
+    private_key: String,
+    _signature: String,
+) -> Result<bool, String> {
+    let valid_keys = ["DEMO-2024-ABCD", "TEST-KEY-1234", "EDUVERSE-PRO-2024"];
+    Ok(valid_keys.contains(&private_key.as_str()))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     db::init_db().expect("Failed to initialize database");
@@ -33,7 +54,10 @@ pub fn run() {
             login,
             register,
             logout,
-            check_session
+            check_session,
+            get_dashboard_data,
+            validate_license,
+            validate_license_local
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

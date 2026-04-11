@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { authService } from "@/services";
+import { unifiedAuthService } from "@/services/unified.service";
 import type {
 	User,
 	School,
@@ -22,7 +22,7 @@ export const useAuthStore = defineStore("auth", () => {
 		isLoading.value = true;
 		error.value = null;
 
-		const response = await authService.login(credentials);
+		const response = await unifiedAuthService.login(credentials);
 
 		if (response.success && response.data) {
 			setSession(response.data);
@@ -39,7 +39,7 @@ export const useAuthStore = defineStore("auth", () => {
 		isLoading.value = true;
 		error.value = null;
 
-		const response = await authService.register(payload);
+		const response = await unifiedAuthService.register(payload);
 
 		if (response.success && response.data) {
 			setSession(response.data);
@@ -60,7 +60,7 @@ export const useAuthStore = defineStore("auth", () => {
 	}
 
 	function logout() {
-		authService.logout();
+		unifiedAuthService.logout();
 		user.value = null;
 		school.value = null;
 		token.value = null;
@@ -72,7 +72,7 @@ export const useAuthStore = defineStore("auth", () => {
 		if (!savedToken) return false;
 
 		token.value = savedToken;
-		const response = await authService.checkSession();
+		const response = await unifiedAuthService.checkSession();
 
 		if (response.success && response.data) {
 			setSession(response.data);

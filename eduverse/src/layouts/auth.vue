@@ -25,7 +25,7 @@ onUnmounted(() => {
 <template>
 	<div
 		ref="containerRef"
-		class="min-h-screen h-screen w-full flex justify-center items-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-background to-gray-100"
+		class="flex justify-center items-center p-4 sm:p-6 md:p-8 bg-linear-to-br from-background to-gray-100"
 	>
 		<div
 			class="w-full max-w-4xl mx-auto overflow-hidden"

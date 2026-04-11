@@ -34,16 +34,16 @@ const iconMap = {
 <template>
 	<div
 		:class="[
-			'flex items-center gap-3 p-4 rounded-lg border shadow-sm',
+			'flex items-center gap-3 p-4 rounded-lg border shadow-lg backdrop-blur-sm transition-all duration-300 hover:shadow-xl',
 			typeClasses[type],
 		]"
 	>
-		<font-awesome-icon :icon="iconMap[type]" class="shrink-0" />
-		<p class="flex-1 text-sm">{{ message }}</p>
+		<font-awesome-icon :icon="iconMap[type]" class="shrink-0 text-lg" />
+		<p class="flex-1 text-sm font-medium">{{ message }}</p>
 		<button
 			v-if="dismissible"
 			type="button"
-			class="shrink-0 hover:opacity-70 transition-opacity"
+			class="shrink-0 hover:opacity-70 transition-opacity p-1"
 			@click="emit('close')"
 		>
 			<font-awesome-icon icon="times" />

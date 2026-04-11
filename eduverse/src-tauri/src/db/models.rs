@@ -90,3 +90,50 @@ pub fn generate_token() -> String {
 pub fn current_timestamp() -> String {
     Utc::now().to_rfc3339()
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Student {
+    pub id: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub class_id: String,
+    pub level: String,
+    pub attendance_status: String,
+    pub created_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Class {
+    pub id: String,
+    pub name: String,
+    pub level: String,
+    pub school_id: String,
+    pub created_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DashboardStats {
+    pub total_students: i32,
+    pub present_students: i32,
+    pub absent_students: i32,
+    pub late_students: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClassLevel {
+    pub name: String,
+    pub student_count: i32,
+    pub color: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DashboardData {
+    pub stats: DashboardStats,
+    pub recent_students: Vec<Student>,
+    pub level_distribution: Vec<ClassLevel>,
+}
