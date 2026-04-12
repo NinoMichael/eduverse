@@ -2,11 +2,13 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { unifiedSchoolYearService } from "@/services/unified.service";
 import { useAuthStore } from "./auth.store";
-import type { SchoolYear, SchoolYearFormData, SchoolYearStatus } from "@/types/school-year";
+import type { SchoolYear, SchoolYearFormData, SchoolYearStatus, SchoolYearEvent, SchoolYearEventFormData, SchoolYearConfiguration } from "@/types/school-year";
 
 export const useSchoolYearStore = defineStore("schoolYear", () => {
 	const schoolYears = ref<SchoolYear[]>([]);
+	const schoolYearEvents = ref<SchoolYearEvent[]>([]);
 	const isLoading = ref(false);
+	const isSubmitting = ref(false);
 	const error = ref<string | null>(null);
 	const activeTab = ref<SchoolYearStatus | "all">("all");
 
@@ -195,11 +197,83 @@ export const useSchoolYearStore = defineStore("schoolYear", () => {
 		error.value = null;
 	}
 
+	async function fetchSchoolYearEvents(schoolYearId: string): Promise<boolean> {
+		isLoading.value = true;
+		error.value = null;
+
+		const response = await unifiedSchoolYearService.getSchoolYearEvents(schoolYearId);
+
+		if (response.success && response.data) {
+			schoolYearEvents.value = response.data;
+			isLoading.value = false;
+			return true;
+		}
+
+		error.value = response.error || "Erreur lors du chargement des événements";
+		isLoading.value = false;
+		return false;
+	}
+
+	async function fetchSchoolYearConfiguration(schoolYearId: string): Promise<SchoolYearConfiguration | null> {
+		isLoading.value = true;
+		error.value = null;
+
+		const response = await unifiedSchoolYearService.getSchoolYearConfiguration(schoolYearId);
+
+		if (response.success && response.data) {
+			schoolYearEvents.value = [
+				...response.data.periods,
+				...response.data.events,
+				...response.data.vacations,
+			];
+			isLoading.value = false;
+			return response.data;
+		}
+
+		error.value = response.error || "Erreur lors du chargement de la configuration";
+		isLoading.value = false;
+		return null;
+	}
+
+	async function saveSchoolYearConfiguration(
+		schoolYearId: string,
+		events: SchoolYearEventFormData[]
+	): Promise<boolean> {
+		isSubmitting.value = true;
+		error.value = null;
+
+		const response = await unifiedSchoolYearService.saveSchoolYearConfiguration(schoolYearId, events);
+
+		if (response.success && response.data) {
+			schoolYearEvents.value = [
+				...response.data.periods,
+				...response.data.events,
+				...response.data.vacations,
+			];
+			isSubmitting.value = false;
+			return true;
+		}
+
+		error.value = response.error || "Erreur lors de l'enregistrement de la configuration";
+		isSubmitting.value = false;
+		return false;
+	}
+
+	function getSchoolYearById(id: string): SchoolYear | undefined {
+		return schoolYears.value.find((y) => y.id === id);
+	}
+
+	function clearSchoolYearEvents() {
+		schoolYearEvents.value = [];
+	}
+
 	return {
 		schoolYears,
+		schoolYearEvents,
 		filteredSchoolYears,
 		activeTab,
 		isLoading,
+		isSubmitting,
 		error,
 		fetchSchoolYears,
 		createSchoolYear,
@@ -212,5 +286,10 @@ export const useSchoolYearStore = defineStore("schoolYear", () => {
 		getSchoolYearStatus,
 		getStatusLabel,
 		getStatusClass,
+		fetchSchoolYearEvents,
+		fetchSchoolYearConfiguration,
+		saveSchoolYearConfiguration,
+		getSchoolYearById,
+		clearSchoolYearEvents,
 	};
 });

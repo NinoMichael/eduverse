@@ -201,7 +201,7 @@ const showError = computed(() => authStore.error);
 
 			<button
 				type="submit"
-				class="mt-8 bg-primary hover:bg-primary/90 text-white"
+				class="mt-8 bg-primary hover:bg-primary/90 text-white w-full"
 			>
 				<span
 					v-if="form.isSubmitting.value"

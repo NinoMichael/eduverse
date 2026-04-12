@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import { useSchoolYearStore } from "@/stores/school-year.store";
 import type { SchoolYearStatus } from "@/types/school-year";
 
@@ -7,6 +8,7 @@ defineOptions({
 	layout: false,
 });
 
+const router = useRouter();
 const schoolYearStore = useSchoolYearStore();
 
 const openMenuId = ref<string | null>(null);
@@ -50,6 +52,18 @@ const handleDelete = async (id: string) => {
 	if (confirm("Êtes-vous sûr de vouloir supprimer cette année scolaire ?")) {
 		await schoolYearStore.deleteSchoolYear(id);
 	}
+};
+
+const handleConfigureMilestones = (id: string) => {
+	closeMenu();
+	router.push(`/dashboard/school-year/event/configure?id=${id}`);
+};
+
+const isYearConfigurable = (year: { isActive: boolean; id: string }) => {
+	return (
+		year.isActive ||
+		schoolYearStore.getSchoolYearStatus(year as any) !== "closed"
+	);
 };
 
 onMounted(() => {
@@ -131,6 +145,14 @@ onMounted(() => {
 							class="absolute right-0 mt-1 w-48 bg-gray-100 rounded-md shadow-lg py-1 z-10 border border-gray-200"
 						>
 							<button
+								v-if="isYearConfigurable(year)"
+								class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+								@click="handleConfigureMilestones(year.id)"
+							>
+								<font-awesome-icon icon="calendar-alt" />
+								Configurer les jalons
+							</button>
+							<button
 								v-if="
 									!year.isActive &&
 									schoolYearStore.getSchoolYearStatus(year) === 'planned'
@@ -138,7 +160,7 @@ onMounted(() => {
 								class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
 								@click="handleSetActive(year.id)"
 							>
-								<font-awesome-icon icon="check" class="text-green-500" />
+								<font-awesome-icon icon="check" />
 								Définir comme active
 							</button>
 							<button
@@ -146,13 +168,13 @@ onMounted(() => {
 								class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
 								@click="handleClose(year.id)"
 							>
-								<font-awesome-icon icon="lock" class="text-amber-500" />
+								<font-awesome-icon icon="lock" />
 								Cloturer
 							</button>
 							<button
 								class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
 							>
-								<font-awesome-icon icon="edit" class="text-blue-500" />
+								<font-awesome-icon icon="edit" />
 								Modifier
 							</button>
 							<button

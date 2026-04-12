@@ -83,7 +83,7 @@ const handleActivate = async () => {
 				<button
 					type="submit"
 					:disabled="isLoading"
-					class="flex justify-center gap-4 items-center bg-primary hover:bg-primary/90 disabled:bg-gray-300 text-white"
+					class="w-full flex justify-center gap-4 items-center bg-primary hover:bg-primary/90 disabled:bg-gray-300 text-white"
 				>
 					<font-awesome-icon
 						v-if="isLoading"

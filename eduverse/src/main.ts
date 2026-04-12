@@ -59,6 +59,8 @@ import {
 	faFlag,
 	faTag,
 	faArrowLeft,
+	faEdit,
+	faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -112,7 +114,9 @@ library.add(
 	faTrash,
 	faFlag,
 	faTag,
-	faArrowLeft
+	faArrowLeft,
+	faEdit,
+	faCheck
 );
 
 const app = createApp(App);

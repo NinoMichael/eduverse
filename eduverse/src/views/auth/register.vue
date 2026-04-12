@@ -151,7 +151,7 @@ const handleSubmit = () => {
 
 			<button
 				type="submit"
-				class="mt-8 bg-primary hover:bg-primary/90 text-white"
+				class="mt-8 bg-primary hover:bg-primary/90 text-white w-full"
 			>
 				Créer l'espace
 			</button>

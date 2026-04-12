@@ -8,7 +8,7 @@ import { mockDashboardService } from "./mock/dashboard.service";
 import type { DashboardData } from "@/types/dashboard";
 import { schoolYearService } from "./school-year.service";
 import { mockSchoolYearService } from "./mock/school-year.service";
-import type { SchoolYear, SchoolYearFormData } from "@/types/school-year";
+import type { SchoolYear, SchoolYearFormData, SchoolYearEvent, SchoolYearEventFormData, SchoolYearConfiguration } from "@/types/school-year";
 
 const useMockServices = !isRunningInTauri();
 
@@ -110,6 +110,57 @@ class UnifiedSchoolYearService {
 			return mockSchoolYearService.deleteSchoolYear(id);
 		}
 		return schoolYearService.deleteSchoolYear(id);
+	}
+
+	async getSchoolYearEvents(schoolYearId: string): Promise<ApiResponse<SchoolYearEvent[]>> {
+		if (useMockServices) {
+			return mockSchoolYearService.getSchoolYearEvents(schoolYearId);
+		}
+		return schoolYearService.getSchoolYearEvents(schoolYearId);
+	}
+
+	async getSchoolYearConfiguration(schoolYearId: string): Promise<ApiResponse<SchoolYearConfiguration>> {
+		if (useMockServices) {
+			return mockSchoolYearService.getSchoolYearConfiguration(schoolYearId);
+		}
+		return schoolYearService.getSchoolYearConfiguration(schoolYearId);
+	}
+
+	async createSchoolYearEvent(
+		schoolYearId: string,
+		data: SchoolYearEventFormData
+	): Promise<ApiResponse<SchoolYearEvent>> {
+		if (useMockServices) {
+			return mockSchoolYearService.createSchoolYearEvent(schoolYearId, data);
+		}
+		return schoolYearService.createSchoolYearEvent(schoolYearId, data);
+	}
+
+	async updateSchoolYearEvent(
+		id: string,
+		data: SchoolYearEventFormData
+	): Promise<ApiResponse<SchoolYearEvent>> {
+		if (useMockServices) {
+			return mockSchoolYearService.updateSchoolYearEvent(id, data);
+		}
+		return schoolYearService.updateSchoolYearEvent(id, data);
+	}
+
+	async deleteSchoolYearEvent(id: string): Promise<ApiResponse<void>> {
+		if (useMockServices) {
+			return mockSchoolYearService.deleteSchoolYearEvent(id);
+		}
+		return schoolYearService.deleteSchoolYearEvent(id);
+	}
+
+	async saveSchoolYearConfiguration(
+		schoolYearId: string,
+		events: SchoolYearEventFormData[]
+	): Promise<ApiResponse<SchoolYearConfiguration>> {
+		if (useMockServices) {
+			return mockSchoolYearService.saveSchoolYearConfiguration(schoolYearId, events);
+		}
+		return schoolYearService.saveSchoolYearConfiguration(schoolYearId, events);
 	}
 }
 

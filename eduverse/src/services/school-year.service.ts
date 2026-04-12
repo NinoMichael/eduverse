@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { ApiResponse } from "./auth.service";
-import type { SchoolYear, SchoolYearFormData } from "@/types/school-year";
+import type { SchoolYear, SchoolYearFormData, SchoolYearEvent, SchoolYearEventFormData, SchoolYearConfiguration } from "@/types/school-year";
 
 class SchoolYearService {
 	async getSchoolYears(schoolId: string): Promise<ApiResponse<SchoolYear[]>> {
@@ -76,6 +76,88 @@ class SchoolYearService {
 		try {
 			await invoke<void>("delete_school_year", { id });
 			return { success: true };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	}
+
+	async getSchoolYearEvents(schoolYearId: string): Promise<ApiResponse<SchoolYearEvent[]>> {
+		try {
+			const response = await invoke<SchoolYearEvent[]>("get_school_year_events", {
+				schoolYearId,
+			});
+			return { success: true, data: response };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	}
+
+	async getSchoolYearConfiguration(schoolYearId: string): Promise<ApiResponse<SchoolYearConfiguration>> {
+		try {
+			const response = await invoke<SchoolYearConfiguration>("get_school_year_configuration", {
+				schoolYearId,
+			});
+			return { success: true, data: response };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	}
+
+	async createSchoolYearEvent(
+		schoolYearId: string,
+		data: SchoolYearEventFormData
+	): Promise<ApiResponse<SchoolYearEvent>> {
+		try {
+			const response = await invoke<SchoolYearEvent>("create_school_year_event", {
+				schoolYearId,
+				eventType: data.type,
+				name: data.name,
+				startDate: data.startDate,
+				endDate: data.endDate,
+			});
+			return { success: true, data: response };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	}
+
+	async updateSchoolYearEvent(
+		id: string,
+		data: SchoolYearEventFormData
+	): Promise<ApiResponse<SchoolYearEvent>> {
+		try {
+			const response = await invoke<SchoolYearEvent>("update_school_year_event", {
+				id,
+				eventType: data.type,
+				name: data.name,
+				startDate: data.startDate,
+				endDate: data.endDate,
+			});
+			return { success: true, data: response };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	}
+
+	async deleteSchoolYearEvent(id: string): Promise<ApiResponse<void>> {
+		try {
+			await invoke<void>("delete_school_year_event", { id });
+			return { success: true };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	}
+
+	async saveSchoolYearConfiguration(
+		schoolYearId: string,
+		events: SchoolYearEventFormData[]
+	): Promise<ApiResponse<SchoolYearConfiguration>> {
+		try {
+			const response = await invoke<SchoolYearConfiguration>("save_school_year_configuration", {
+				schoolYearId,
+				events,
+			});
+			return { success: true, data: response };
 		} catch (error) {
 			return { success: false, error: String(error) };
 		}
