@@ -6,6 +6,11 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
 	{ label: "Accueil", icon: "home", route: "/dashboard" },
+	{
+		label: "Année scolaire",
+		icon: "calendar-week",
+		route: "/dashboard/school-year/list",
+	},
 	{ label: "Étudiants", icon: "user-graduate", route: "/dashboard/students" },
 	{
 		label: "Professeurs",
@@ -23,11 +28,6 @@ export const navItems: NavItem[] = [
 		label: "Emplois du temps",
 		icon: "calendar-alt",
 		route: "/dashboard/schedule",
-	},
-	{
-		label: "Année scolaire",
-		icon: "calendar-week",
-		route: "/dashboard/school-year/list",
 	},
 	{ label: "Paramètres", icon: "cog", route: "/dashboard/settings" },
 ];

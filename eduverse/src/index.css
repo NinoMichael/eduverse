@@ -45,6 +45,10 @@ input {
 	@apply h-10 w-full border border-gray-300 rounded-md outline-primary/50 focus:ring-primary/50 px-3 transition-all;
 }
 
+input[type="checkbox"] {
+	@apply w-4 h-4;
+}
+
 select {
 	@apply h-10 w-full border border-gray-300 rounded-md outline-primary/50 focus:ring-primary/50 px-3 transition-all;
 }

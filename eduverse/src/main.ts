@@ -54,6 +54,11 @@ import {
 	faPlusCircle,
 	faEllipsisV,
 	faCalendarCheck,
+	faSliders,
+	faTrash,
+	faFlag,
+	faTag,
+	faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -102,7 +107,12 @@ library.add(
 	faHouse,
 	faPlusCircle,
 	faEllipsisV,
-	faCalendarCheck
+	faCalendarCheck,
+	faSliders,
+	faTrash,
+	faFlag,
+	faTag,
+	faArrowLeft
 );
 
 const app = createApp(App);

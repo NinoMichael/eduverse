@@ -131,7 +131,7 @@ const showError = computed(() => authStore.error);
 				<button
 					type="button"
 					:disabled="form.isSubmitting.value"
-					class="bg-primary hover:bg-primary/90 text-white"
+					class="bg-primary hover:bg-primary/90 text-white w-full"
 					@click="handleSubmit"
 				>
 					<span

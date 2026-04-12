@@ -67,7 +67,7 @@ onMounted(() => {
 			</p>
 
 			<div class="mt-6 flex justify-start">
-				<router-link to="/">
+				<router-link to="/dashboard/school-year/create">
 					<button
 						class="text-primary bg-background hover:bg-background/90 rounded-lg px-4 py-2"
 					>
@@ -128,7 +128,7 @@ onMounted(() => {
 
 						<div
 							v-if="openMenuId === year.id"
-							class="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-10 border"
+							class="absolute right-0 mt-1 w-48 bg-gray-100 rounded-md shadow-lg py-1 z-10 border border-gray-200"
 						>
 							<button
 								v-if="
