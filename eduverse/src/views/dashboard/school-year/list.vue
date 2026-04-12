@@ -54,6 +54,11 @@ const handleDelete = async (id: string) => {
 	}
 };
 
+const handleEdit = (id: string) => {
+	closeMenu();
+	router.push(`/dashboard/school-year/edit/${id}`);
+};
+
 const handleConfigureMilestones = (id: string) => {
 	closeMenu();
 	router.push(`/dashboard/school-year/event/configure?id=${id}`);
@@ -173,6 +178,7 @@ onMounted(() => {
 							</button>
 							<button
 								class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+								@click="handleEdit(year.id)"
 							>
 								<font-awesome-icon icon="edit" />
 								Modifier

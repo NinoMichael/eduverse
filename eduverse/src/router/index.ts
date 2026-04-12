@@ -102,7 +102,12 @@ const routes: RouteRecordRaw[] = [
 			},
 			{
 				path: "school-year/create",
-				name: "ListSchoolYears",
+				name: "CreateSchoolYear",
+				component: SchoolYearCreate,
+			},
+			{
+				path: "school-year/edit/:id",
+				name: "EditSchoolYear",
 				component: SchoolYearCreate,
 			},
 			{
