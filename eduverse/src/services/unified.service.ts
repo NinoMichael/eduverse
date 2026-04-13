@@ -8,7 +8,10 @@ import { mockDashboardService } from "./mock/dashboard.service";
 import type { DashboardData } from "@/types/dashboard";
 import { schoolYearService } from "./school-year.service";
 import { mockSchoolYearService } from "./mock/school-year.service";
+import { studentService } from "./student.service";
+import { mockStudentService } from "./mock/student.service";
 import type { SchoolYear, SchoolYearFormData, SchoolYearEvent, SchoolYearEventFormData, SchoolYearConfiguration } from "@/types/school-year";
+import type { Student, StudentFormData, StudentFilters, StudentStats } from "@/types/student";
 
 const useMockServices = !isRunningInTauri();
 
@@ -164,9 +167,65 @@ class UnifiedSchoolYearService {
 	}
 }
 
+class UnifiedStudentService {
+	async getStudents(schoolId: string, schoolYearId: string): Promise<ApiResponse<Student[]>> {
+		if (useMockServices) {
+			return mockStudentService.getStudents(schoolId, schoolYearId);
+		}
+		return studentService.getStudents(schoolId, schoolYearId);
+	}
+
+	async getStudentById(id: string): Promise<ApiResponse<Student>> {
+		if (useMockServices) {
+			return mockStudentService.getStudentById(id);
+		}
+		return studentService.getStudentById(id);
+	}
+
+	async createStudent(
+		schoolId: string,
+		schoolYearId: string,
+		data: StudentFormData
+	): Promise<ApiResponse<Student>> {
+		if (useMockServices) {
+			return mockStudentService.createStudent(schoolId, schoolYearId, data);
+		}
+		return studentService.createStudent(schoolId, schoolYearId, data);
+	}
+
+	async updateStudent(id: string, data: Partial<StudentFormData>): Promise<ApiResponse<Student>> {
+		if (useMockServices) {
+			return mockStudentService.updateStudent(id, data);
+		}
+		return studentService.updateStudent(id, data);
+	}
+
+	async deleteStudent(id: string): Promise<ApiResponse<void>> {
+		if (useMockServices) {
+			return mockStudentService.deleteStudent(id);
+		}
+		return studentService.deleteStudent(id);
+	}
+
+	async getStudentStats(schoolId: string, schoolYearId: string): Promise<ApiResponse<StudentStats>> {
+		if (useMockServices) {
+			return mockStudentService.getStudentStats(schoolId, schoolYearId);
+		}
+		return studentService.getStudentStats(schoolId, schoolYearId);
+	}
+
+	filterStudents(students: Student[], filters: StudentFilters): Student[] {
+		if (useMockServices) {
+			return mockStudentService.filterStudents(students, filters);
+		}
+		return studentService.filterStudents(students, filters);
+	}
+}
+
 export const unifiedAuthService = new UnifiedAuthService();
 export const unifiedDashboardService = new UnifiedDashboardService();
 export const unifiedActivationService = new UnifiedActivationService();
 export const unifiedSchoolYearService = new UnifiedSchoolYearService();
+export const unifiedStudentService = new UnifiedStudentService();
 
 export const isDebugMode = useMockServices;

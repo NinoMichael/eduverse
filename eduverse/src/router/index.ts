@@ -13,11 +13,15 @@ import Login from "@/views/auth/login.vue";
 import ActivateSoftware from "@/views/auth/activate-software.vue";
 
 import DashboardIndex from "@/views/dashboard/index.vue";
+
 import SchoolYearList from "@/views/dashboard/school-year/list.vue";
 import SchoolYearCreate from "@/views/dashboard/school-year/create.vue";
 import SchoolYearConfigureEvent from "@/views/dashboard/school-year/configure-event.vue";
 
-import DashboardStudents from "@/views/dashboard/students.vue";
+import StudentsList from "@/views/dashboard/students/list.vue";
+import StudentsCreate from "@/views/dashboard/students/create.vue";
+import StudentsEdit from "@/views/dashboard/students/edit.vue";
+
 import DashboardTeachers from "@/views/dashboard/teachers.vue";
 import DashboardClasses from "@/views/dashboard/classes.vue";
 import DashboardAttendance from "@/views/dashboard/attendance.vue";
@@ -116,9 +120,19 @@ const routes: RouteRecordRaw[] = [
 				component: SchoolYearConfigureEvent,
 			},
 			{
-				path: "students",
-				name: "DashboardStudents",
-				component: DashboardStudents,
+				path: "students/list",
+				name: "ListStudents",
+				component: StudentsList,
+			},
+			{
+				path: "students/create",
+				name: "CreateStudent",
+				component: StudentsCreate,
+			},
+			{
+				path: "students/edit/:id",
+				name: "EditStudent",
+				component: StudentsEdit,
 			},
 			{
 				path: "teachers",

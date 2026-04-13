@@ -11,7 +11,11 @@ export const navItems: NavItem[] = [
 		icon: "calendar-week",
 		route: "/dashboard/school-year/list",
 	},
-	{ label: "Étudiants", icon: "user-graduate", route: "/dashboard/students" },
+	{
+		label: "Étudiants",
+		icon: "user-graduate",
+		route: "/dashboard/students/list",
+	},
 	{
 		label: "Professeurs",
 		icon: "chalkboard-teacher",

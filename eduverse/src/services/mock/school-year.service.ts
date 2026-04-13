@@ -10,7 +10,35 @@ const generateId = (): string => {
 };
 
 function getSchoolYears(): SchoolYear[] {
-	return db.get<SchoolYear[]>(SCHOOL_YEAR_COLLECTION, []) ?? [];
+	const years = db.get<SchoolYear[]>(SCHOOL_YEAR_COLLECTION, []) ?? [];
+	
+	if (years.length === 0) {
+		const currentYear = new Date().getFullYear();
+		const defaultYears: SchoolYear[] = [
+			{
+				id: "year_1",
+				name: `${currentYear}-${currentYear + 1}`,
+				startDate: `${currentYear}-01-10`,
+				endDate: `${currentYear + 1}-11-30`,
+				isActive: true,
+				schoolId: "school_1",
+				createdAt: new Date().toISOString(),
+			},
+			{
+				id: "year_2",
+				name: `${currentYear - 1}-${currentYear}`,
+				startDate: `${currentYear - 1}-01-10`,
+				endDate: `${currentYear}-11-30`,
+				isActive: false,
+				schoolId: "school_1",
+				createdAt: new Date().toISOString(),
+			},
+		];
+		db.set(SCHOOL_YEAR_COLLECTION, defaultYears);
+		return defaultYears;
+	}
+	
+	return years;
 }
 
 function saveSchoolYear(year: SchoolYear): void {

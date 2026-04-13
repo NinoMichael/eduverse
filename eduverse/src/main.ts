@@ -61,6 +61,18 @@ import {
 	faArrowLeft,
 	faEdit,
 	faCheck,
+	faSearch,
+	faFilter,
+	faEllipsisH,
+	faVenusMars,
+	faBirthdayCake,
+	faMapMarkerAlt,
+	faPhone,
+	faPhoneAlt,
+	faEnvelope,
+	faUserTie,
+	faUserFriends,
+	faEye,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -116,7 +128,19 @@ library.add(
 	faTag,
 	faArrowLeft,
 	faEdit,
-	faCheck
+	faCheck,
+	faSearch,
+	faFilter,
+	faEllipsisH,
+	faVenusMars,
+	faBirthdayCake,
+	faMapMarkerAlt,
+	faPhone,
+	faPhoneAlt,
+	faEnvelope,
+	faUserTie,
+	faUserFriends,
+	faEye
 );
 
 const app = createApp(App);

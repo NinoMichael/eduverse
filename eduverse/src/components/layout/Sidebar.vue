@@ -45,7 +45,7 @@ const handleLogout = () => {
 			</button>
 		</div>
 
-		<nav class="flex-1 py-4 overflow-y-auto">
+		<nav class="flex-1 py-4">
 			<ul class="space-y-1 px-3">
 				<li v-for="item in navItems" :key="item.route">
 					<router-link

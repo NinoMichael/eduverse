@@ -73,6 +73,46 @@ function findSchoolById(id: string): StoredSchool | undefined {
 	return schools.find((s) => s.id === id);
 }
 
+function getOrCreateDefaultSchool(): StoredSchool {
+	const schools = getSchools();
+	if (schools.length > 0) {
+		return schools[0];
+	}
+	const school: StoredSchool = {
+		id: "school_1",
+		name: " Lycée Moderne Antananarivo",
+		address: "Analakely, Antananarivo 101",
+		type: "high_school",
+		createdAt: new Date().toISOString(),
+	};
+	saveSchool(school);
+	
+	const currentYear = new Date().getFullYear();
+	const defaultYears = [
+		{
+			id: "year_1",
+			name: `${currentYear}-${currentYear + 1}`,
+			startDate: `${currentYear}-01-10`,
+			endDate: `${currentYear + 1}-11-30`,
+			isActive: true,
+			schoolId: school.id,
+			createdAt: new Date().toISOString(),
+		},
+		{
+			id: "year_2",
+			name: `${currentYear - 1}-${currentYear}`,
+			startDate: `${currentYear - 1}-01-10`,
+			endDate: `${currentYear}-11-30`,
+			isActive: false,
+			schoolId: school.id,
+			createdAt: new Date().toISOString(),
+		},
+	];
+	db.set("school_years", defaultYears);
+	
+	return school;
+}
+
 function createSchool(name: string, address: string, type: string): StoredSchool {
 	const school: StoredSchool = {
 		id: generateId(),
@@ -185,10 +225,42 @@ export class MockAuthService {
 
 	async checkSession(): Promise<ApiResponse<AuthResponse>> {
 		const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+		console.log('[MockAuthService] checkSession - token:', token ? 'exists' : 'none');
+		
 		if (!token) {
 			return { success: false, error: "No active session" };
 		}
-		return { success: false, error: "Session check not implemented in mock" };
+
+		const users = getUsers();
+		console.log('[MockAuthService] checkSession - users:', users.length);
+
+		if (users.length === 0) {
+			const school = getOrCreateDefaultSchool();
+			console.log('[MockAuthService] checkSession - created default school:', school.id, school.name);
+			const defaultUser = createUser("admin", "password", school.id, "admin");
+			console.log('[MockAuthService] checkSession - created default user');
+			const { passwordHash: _, ...safeUser } = defaultUser;
+			return {
+				success: true,
+				data: {
+					user: safeUser,
+					school,
+					token,
+				},
+			};
+		}
+
+		const user = users[0];
+		const school = findSchoolById(user.schoolId) || getOrCreateDefaultSchool();
+		const { passwordHash: _, ...safeUser } = user;
+		return {
+			success: true,
+			data: {
+				user: safeUser,
+				school,
+				token,
+			},
+		};
 	}
 }
 
