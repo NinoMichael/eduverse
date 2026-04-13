@@ -919,7 +919,7 @@ onMounted(async () => {
 							icon="clipboard-check"
 							class="p-2 rounded-lg bg-gray-200"
 						/>
-						<span>Service & finance</span>
+						<span>Étape 4: Service & finance</span>
 					</h3>
 				</div>
 
@@ -1015,7 +1015,7 @@ onMounted(async () => {
 							icon="folder"
 							class="p-2 rounded-lg bg-gray-200"
 						/>
-						<span>Documents joints</span>
+						<span>Étape 5: Documents joints</span>
 					</h3>
 				</div>
 				<p class="mt-3">

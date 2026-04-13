@@ -83,9 +83,10 @@ const handleSubmit = async () => {
 			toast.success("Année scolaire créée avec succès");
 		}
 		if (configureImmediately.value) {
-			const yearId = isEditMode.value && editingYearId.value 
-				? editingYearId.value 
-				: schoolYearStore.schoolYears[0]?.id;
+			const yearId =
+				isEditMode.value && editingYearId.value
+					? editingYearId.value
+					: schoolYearStore.schoolYears[0]?.id;
 			if (yearId) {
 				router.push(`/dashboard/school-year/event/configure?id=${yearId}`);
 			} else {
@@ -95,9 +96,7 @@ const handleSubmit = async () => {
 			router.push("/dashboard/school-year/list");
 		}
 	} else {
-		toast.error(
-			schoolYearStore.error || "Erreur lors de l'opération"
-		);
+		toast.error(schoolYearStore.error || "Erreur lors de l'opération");
 	}
 };
 
@@ -128,7 +127,9 @@ onMounted(async () => {
 
 		<div class="relative space-y-1 bg-primary text-white p-8 rounded-lg w-full">
 			<h2 class="text-lg lg:text-xl font-semibold">
-				{{ isEditMode ? 'Modifier l\'année scolaire' : 'Créer une année scolaire' }}
+				{{
+					isEditMode ? "Modifier l'année scolaire" : "Créer une année scolaire"
+				}}
 			</h2>
 			<p class="text-sm w-[70%]">
 				<template v-if="isEditMode">
@@ -136,8 +137,8 @@ onMounted(async () => {
 				</template>
 				<template v-else>
 					Remplissez les informations ci-dessous pour créer une nouvelle année
-					scolaire. Vous pourrez ensuite ajouter des périodes et des événements à
-					cette année scolaire.
+					scolaire. Vous pourrez ensuite ajouter des périodes et des événements
+					à cette année scolaire.
 				</template>
 			</p>
 
@@ -329,7 +330,9 @@ onMounted(async () => {
 							</label>
 						</div>
 					</div>
-					<div class="col-span-2 md:col-span-1 space-y-3 flex items-center gap-2">
+					<div
+						class="col-span-2 md:col-span-1 space-y-3 flex items-center gap-2"
+					>
 						<input
 							type="checkbox"
 							id="configureImmediately"
@@ -375,8 +378,20 @@ onMounted(async () => {
 							icon="circle-notch"
 							class="animate-spin mr-2"
 						/>
-						<font-awesome-icon v-else :icon="isEditMode ? 'save' : 'plus-circle'" class="mr-2" />
-						<span>{{ form.isSubmitting.value ? (isEditMode ? 'Modification...' : 'Création...') : (isEditMode ? 'Modifier' : 'Créer') }}</span>
+						<font-awesome-icon
+							v-else
+							:icon="isEditMode ? 'save' : 'plus-circle'"
+							class="mr-2"
+						/>
+						<span>{{
+							form.isSubmitting.value
+								? isEditMode
+									? "Modification..."
+									: "Création..."
+								: isEditMode
+								? "Modifier"
+								: "Créer"
+						}}</span>
 					</button>
 				</div>
 			</div>

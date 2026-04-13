@@ -2,9 +2,16 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useStudentStore } from "@/stores/student.store";
+import { useClassStore } from "@/stores/class.store";
 import { useSchoolYearStore } from "@/stores/school-year.store";
 import { useToast } from "@/composables/useToast";
-import type { StudentFormData, Gender, Student, Guardian, StudentSchoolHistory, StudentServices, StudentDocuments, EnrollmentType } from "@/types/student";
+import type {
+	Gender,
+	Guardian,
+	StudentServices,
+	StudentDocuments,
+	Student,
+} from "@/types/student";
 
 defineOptions({
 	layout: false,
@@ -13,79 +20,174 @@ defineOptions({
 const router = useRouter();
 const route = useRoute();
 const studentStore = useStudentStore();
+const classStore = useClassStore();
 const schoolYearStore = useSchoolYearStore();
 const toast = useToast();
 
 const isLoading = ref(false);
 const studentId = computed(() => route.params.id as string);
-const isEditMode = computed(() => !!studentId.value);
-
-const form = ref<StudentFormData>({
-	firstName: "",
-	lastName: "",
-	gender: "male" as Gender,
-	dateOfBirth: "",
-	placeOfBirth: "",
-	address: "",
-	phone: "",
-	email: "",
-	guardianName: "",
-	guardianPhone: "",
-	guardianRelation: "",
-	classId: null,
-	enrollmentType: "new" as EnrollmentType,
-	guardians: [] as Guardian[],
-	schoolHistory: null as StudentSchoolHistory | null,
-	services: { hasTransport: false, hasCanteen: false } as StudentServices,
-	documents: { birthCertificate: false, photoId: false, residenceCertificate: false } as StudentDocuments,
-});
-
-const errors = ref<Record<string, string>>({});
-
 const currentStudent = ref<Student | null>(null);
 
-const validateForm = (): boolean => {
-	errors.value = {};
-	
-	if (!form.value.firstName.trim()) {
-		errors.value.firstName = "Le prénom est requis";
+const firstName = ref("");
+const lastName = ref("");
+const gender = ref<Gender>("male");
+const dateOfBirth = ref("");
+const placeOfBirth = ref("");
+const address = ref("");
+
+const selectedClassId = ref("");
+
+const guardians = ref<Guardian[]>([
+	{
+		name: "",
+		relation: "",
+		phone: "",
+		profession: "",
+		isEmergencyContact: true,
+	},
+]);
+
+const hasTransport = ref(false);
+const hasCanteen = ref(false);
+
+const paymentMode = ref("");
+
+const documents = ref<StudentDocuments>({
+	birthCertificate: false,
+	photoId: false,
+	residenceCertificate: false,
+});
+
+const photoFile = ref<File | null>(null);
+const photoPreview = ref<string | null>(null);
+const photoError = ref("");
+
+const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+
+const relationOptions = [
+	{ value: "Père", label: "Père" },
+	{ value: "Mère", label: "Mère" },
+	{ value: "Tuteur", label: "Tuteur" },
+	{ value: "Grand-parent", label: "Grand-parent" },
+	{ value: "Autre", label: "Autre" },
+];
+
+const paymentModes = [
+	{ value: "cash", label: "Espèces" },
+	{ value: "bank_transfer", label: "Virement bancaire" },
+	{ value: "mobile_money", label: "Mobile Money" },
+	{ value: "cheque", label: "Chèque" },
+	{ value: "installment", label: "Paiement échelonné" },
+];
+
+const handlePhotoChange = (event: Event) => {
+	const target = event.target as HTMLInputElement;
+	const file = target.files?.[0];
+
+	if (!file) return;
+
+	photoError.value = "";
+
+	if (!ALLOWED_TYPES.includes(file.type)) {
+		photoError.value = "Format non autorisé. Utilisez JPEG, JPG ou PNG.";
+		return;
 	}
-	if (!form.value.lastName.trim()) {
-		errors.value.lastName = "Le nom est requis";
+
+	if (file.size > MAX_PHOTO_SIZE) {
+		photoError.value = "La taille du fichier ne doit pas dépasser 2MB.";
+		return;
 	}
-	if (!form.value.dateOfBirth) {
-		errors.value.dateOfBirth = "La date de naissance est requise";
-	}
-	if (!form.value.placeOfBirth.trim()) {
-		errors.value.placeOfBirth = "Le lieu de naissance est requis";
-	}
-	if (!form.value.guardianName.trim()) {
-		errors.value.guardianName = "Le nom du parent/tuteur est requis";
-	}
-	if (!form.value.guardianPhone.trim()) {
-		errors.value.guardianPhone = "Le contact du parent est requis";
-	}
-	if (!form.value.guardianRelation.trim()) {
-		errors.value.guardianRelation = "La relation est requise";
-	}
-	
-	return Object.keys(errors.value).length === 0;
+
+	photoFile.value = file;
+
+	const reader = new FileReader();
+	reader.onload = (e) => {
+		photoPreview.value = e.target?.result as string;
+	};
+	reader.readAsDataURL(file);
 };
 
-const handleCancel = () => {
-	router.push("/dashboard/students/list");
+const removePhoto = () => {
+	photoFile.value = null;
+	photoPreview.value = null;
+	photoError.value = "";
+	const fileInput = document.getElementById("photo-input") as HTMLInputElement;
+	if (fileInput) fileInput.value = "";
+};
+
+const addGuardian = () => {
+	guardians.value.push({
+		name: "",
+		relation: "",
+		phone: "",
+		profession: "",
+		isEmergencyContact: false,
+	});
+};
+
+const removeGuardian = (index: number) => {
+	if (guardians.value.length > 1) {
+		guardians.value.splice(index, 1);
+		if (guardians.value.length === 1) {
+			guardians.value[0].isEmergencyContact = true;
+		}
+	}
+};
+
+const setEmergencyContact = (index: number) => {
+	guardians.value.forEach((g, i) => {
+		g.isEmergencyContact = i === index;
+	});
 };
 
 const handleSubmit = async () => {
-	if (!validateForm()) {
-		toast.error("Veuillez corriger les erreurs dans le formulaire");
+	if (
+		!firstName.value ||
+		!lastName.value ||
+		!dateOfBirth.value ||
+		!placeOfBirth.value ||
+		!selectedClassId.value
+	) {
+		toast.error("Veuillez remplir tous les champs obligatoires");
+		return;
+	}
+
+	if (guardians.value.length === 0 || !guardians.value[0].name) {
+		toast.error("Veuillez ajouter au moins un responsable légal");
 		return;
 	}
 
 	isLoading.value = true;
-	
-	const success = await studentStore.updateStudent(studentId.value, form.value);
-	
+
+	const services: StudentServices = {
+		hasTransport: hasTransport.value,
+		hasCanteen: hasCanteen.value,
+	};
+
+	const formData = {
+		firstName: firstName.value,
+		lastName: lastName.value,
+		gender: gender.value,
+		dateOfBirth: dateOfBirth.value,
+		placeOfBirth: placeOfBirth.value,
+		address: address.value,
+		phone: "",
+		email: "",
+		guardianName: guardians.value[0].name,
+		guardianPhone: guardians.value[0].phone,
+		guardianRelation: guardians.value[0].relation,
+		classId: selectedClassId.value,
+		enrollmentType: currentStudent.value?.enrollmentType || "new",
+		guardians: guardians.value,
+		schoolHistory: null,
+		services,
+		documents: documents.value,
+		photoUrl: photoPreview.value || currentStudent.value?.photoUrl,
+	};
+
+	const success = await studentStore.updateStudent(studentId.value, formData);
+
 	isLoading.value = false;
 
 	if (success) {
@@ -98,34 +200,45 @@ const handleSubmit = async () => {
 
 onMounted(async () => {
 	await schoolYearStore.fetchSchoolYears();
-	
-	if (isEditMode.value && studentId.value) {
-		const student = studentStore.getStudentById(studentId.value);
-		if (student) {
-			currentStudent.value = student;
-			form.value = {
-				firstName: student.firstName,
-				lastName: student.lastName,
-				gender: student.gender,
-				dateOfBirth: student.dateOfBirth,
-				placeOfBirth: student.placeOfBirth,
-				address: student.address,
-				phone: student.phone,
-				email: student.email,
-				guardianName: student.guardianName,
-				guardianPhone: student.guardianPhone,
-				guardianRelation: student.guardianRelation,
-				classId: student.classId,
-				enrollmentType: student.enrollmentType || "new",
-				guardians: student.schoolHistory ? [] : [],
-				schoolHistory: student.schoolHistory || null,
-				services: student.services || { hasTransport: false, hasCanteen: false },
-				documents: student.documents || { birthCertificate: false, photoId: false, residenceCertificate: false },
-			};
-		} else {
-			toast.error("Étudiant non trouvé");
-			router.push("/dashboard/students/list");
+	await classStore.fetchClasses();
+
+	const student = studentStore.getStudentById(studentId.value);
+	if (student) {
+		currentStudent.value = student;
+		firstName.value = student.firstName;
+		lastName.value = student.lastName;
+		gender.value = student.gender;
+		dateOfBirth.value = student.dateOfBirth;
+		placeOfBirth.value = student.placeOfBirth;
+		address.value = student.address;
+		selectedClassId.value = student.classId || "";
+		photoPreview.value = student.photoUrl;
+		hasTransport.value = student.services?.hasTransport || false;
+		hasCanteen.value = student.services?.hasCanteen || false;
+		documents.value = student.documents || {
+			birthCertificate: false,
+			photoId: false,
+			residenceCertificate: false,
+		};
+
+		if (
+			student.guardianName ||
+			student.guardianPhone ||
+			student.guardianRelation
+		) {
+			guardians.value = [
+				{
+					name: student.guardianName,
+					relation: student.guardianRelation,
+					phone: student.guardianPhone,
+					profession: "",
+					isEmergencyContact: true,
+				},
+			];
 		}
+	} else {
+		toast.error("Étudiant non trouvé");
+		router.push("/dashboard/students/list");
 	}
 });
 </script>
@@ -133,14 +246,16 @@ onMounted(async () => {
 <template>
 	<div class="space-y-4 lg:space-y-6">
 		<button
-			@click="handleCancel"
+			@click="router.push('/dashboard/students/list')"
 			class="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors"
 		>
 			<font-awesome-icon icon="arrow-left" />
 			<span>Retour à la liste</span>
 		</button>
 
-		<div class="relative space-y-1 bg-primary text-white p-8 rounded-lg w-full">
+		<div
+			class="-mt-2 relative space-y-1 bg-primary text-white p-8 rounded-lg w-full"
+		>
 			<h2 class="text-lg lg:text-xl font-semibold">
 				Modifier les informations de l'étudiant
 			</h2>
@@ -154,238 +269,497 @@ onMounted(async () => {
 			/>
 		</div>
 
-		<div v-if="currentStudent" class="bg-white rounded-lg p-4 shadow mb-4">
-			<div class="flex items-center gap-4">
-				<img
-					:src="currentStudent.photoUrl || 'https://randomuser.me/api/portraits/men/1.jpg'"
-					:alt="`${currentStudent.firstName} ${currentStudent.lastName}`"
-					class="w-16 h-16 rounded-full object-cover"
-				/>
-				<div>
-					<p class="font-semibold text-lg">{{ currentStudent.firstName }} {{ currentStudent.lastName }}</p>
-					<p class="text-sm text-gray-500">Matricule: {{ currentStudent.matricule }}</p>
-				</div>
-			</div>
-		</div>
+		<form class="mt-8" @submit.prevent="handleSubmit">
+			<div class="bg-white rounded-lg p-6 shadow">
+				<div
+					class="flex flex-col sm:flex-row sm:justify-between gap-4 sm:items-center"
+				>
+					<h3 class="flex gap-3 items-center font-bold text-base text-primary">
+						<font-awesome-icon icon="user" class="p-2 rounded-lg bg-gray-200" />
+						<span>Données d'identité</span>
+					</h3>
 
-		<form
-			class="mt-8 bg-white rounded-lg p-6 shadow"
-			@submit.prevent="handleSubmit"
-		>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-						<font-awesome-icon icon="user" />
-						<span>Prénom</span>
-					</label>
-					<input
-						type="text"
-						v-model="form.firstName"
-						placeholder="Prénom de l'étudiant"
-						:class="[
-							'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors',
-							errors.firstName ? 'border-red-500' : 'border-gray-300',
-						]"
-					/>
-					<p v-if="errors.firstName" class="text-xs text-red-500">
-						{{ errors.firstName }}
-					</p>
-				</div>
-
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-						<font-awesome-icon icon="user" />
-						<span>Nom</span>
-					</label>
-					<input
-						type="text"
-						v-model="form.lastName"
-						placeholder="Nom de l'étudiant"
-						:class="[
-							'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors',
-							errors.lastName ? 'border-red-500' : 'border-gray-300',
-						]"
-					/>
-					<p v-if="errors.lastName" class="text-xs text-red-500">
-						{{ errors.lastName }}
-					</p>
-				</div>
-
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-						<font-awesome-icon icon="venus-mars" />
-						<span>Sexe</span>
-					</label>
-					<select
-						v-model="form.gender"
-						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+					<span
+						v-if="currentStudent"
+						class="w-fit text-green-600 tracking-widest uppercase text-[0.7em] font-bold bg-green-600/40 px-4 py-2 rounded-lg"
 					>
-						<option value="male">Masculin</option>
-						<option value="female">Féminin</option>
-					</select>
+						Matricule: {{ currentStudent.matricule }}
+					</span>
 				</div>
 
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-						<font-awesome-icon icon="birthday-cake" />
-						<span>Date de naissance</span>
-					</label>
-					<input
-						type="date"
-						v-model="form.dateOfBirth"
-						:class="[
-							'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50',
-							errors.dateOfBirth ? 'border-red-500' : 'border-gray-300',
-						]"
-					/>
-					<p v-if="errors.dateOfBirth" class="text-xs text-red-500">
-						{{ errors.dateOfBirth }}
-					</p>
-				</div>
+				<div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+					<div class="md:col-span-1">
+						<label class="cursor-pointer block">
+							<input
+								type="file"
+								id="photo-input"
+								accept="image/jpeg,image/jpg,image/png"
+								class="hidden"
+								@change="handlePhotoChange"
+							/>
+							<div
+								v-if="!photoPreview"
+								class="hover:scale-105 hover:transition-all hover:duration-500 text-gray-400 font-bold flex flex-col gap-4 justify-center items-center px-auto bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg w-full h-44"
+							>
+								<font-awesome-icon icon="camera" class="text-2xl" />
+								<p class="text-[0.7em] uppercase tracking-widest">
+									télécharger photo
+								</p>
+							</div>
+							<div v-else class="relative w-full h-44">
+								<img
+									:src="photoPreview"
+									alt="Aperçu photo"
+									class="w-full h-full object-cover rounded-lg"
+								/>
+								<button
+									type="button"
+									@click.stop="removePhoto"
+									class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors"
+								>
+									<font-awesome-icon icon="times" />
+								</button>
+							</div>
+						</label>
+						<p v-if="photoError" class="text-xs text-red-500 mt-2 text-center">
+							{{ photoError }}
+						</p>
+						<p v-else class="text-xs text-center mt-6 opacity-50 font-medium">
+							Formats: JPEG, JPG, PNG | Max: 2MB
+						</p>
+					</div>
+					<div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<font-awesome-icon icon="user" />
+								<span>Nom <span class="text-red-500">*</span></span>
+							</label>
+							<input
+								type="text"
+								v-model="lastName"
+								placeholder="Nom de l'élève"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+								required
+							/>
+						</div>
 
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-						<font-awesome-icon icon="map-marker-alt" />
-						<span>Lieu de naissance</span>
-					</label>
-					<input
-						type="text"
-						v-model="form.placeOfBirth"
-						placeholder="Lieu de naissance"
-						:class="[
-							'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50',
-							errors.placeOfBirth ? 'border-red-500' : 'border-gray-300',
-						]"
-					/>
-					<p v-if="errors.placeOfBirth" class="text-xs text-red-500">
-						{{ errors.placeOfBirth }}
-					</p>
-				</div>
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<font-awesome-icon icon="user" />
+								<span>Prénoms <span class="text-red-500">*</span></span>
+							</label>
+							<input
+								type="text"
+								v-model="firstName"
+								placeholder="Prénom de l'élève"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+								required
+							/>
+						</div>
 
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-						<font-awesome-icon icon="home" />
-						<span>Adresse</span>
-					</label>
-					<input
-						type="text"
-						v-model="form.address"
-						placeholder="Adresse de l'étudiant"
-						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-					/>
-				</div>
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<font-awesome-icon icon="venus-mars" />
+								<span>Sexe <span class="text-red-500">*</span></span>
+							</label>
+							<select
+								v-model="gender"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+								required
+							>
+								<option value="male">Masculin</option>
+								<option value="female">Féminin</option>
+							</select>
+						</div>
 
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-						<font-awesome-icon icon="phone" />
-						<span>Téléphone</span>
-					</label>
-					<input
-						type="tel"
-						v-model="form.phone"
-						placeholder="Numéro de téléphone"
-						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-					/>
-				</div>
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<font-awesome-icon icon="birthday-cake" />
+								<span
+									>Date de naissance <span class="text-red-500">*</span></span
+								>
+							</label>
+							<input
+								type="date"
+								v-model="dateOfBirth"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+								required
+							/>
+						</div>
 
-				<div class="space-y-3">
-					<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-						<font-awesome-icon icon="envelope" />
-						<span>Email</span>
-					</label>
-					<input
-						type="email"
-						v-model="form.email"
-						placeholder="Email de l'étudiant"
-						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-					/>
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<font-awesome-icon icon="map-marker-alt" />
+								<span
+									>Lieu de naissance <span class="text-red-500">*</span></span
+								>
+							</label>
+							<input
+								type="text"
+								v-model="placeOfBirth"
+								placeholder="Lieu de naissance"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+								required
+							/>
+						</div>
+
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<font-awesome-icon icon="home" />
+								<span>Domicile</span>
+							</label>
+							<input
+								type="text"
+								v-model="address"
+								placeholder="Adresse de l'élève"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+							/>
+						</div>
+					</div>
 				</div>
 			</div>
 
-			<div class="mt-8 border-t pt-6">
-				<h3 class="text-lg font-semibold mb-4 text-primary">
-					Informations du parent/tuteur
-				</h3>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<div class="space-y-3">
-						<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-							<font-awesome-icon icon="user-tie" />
-							<span>Nom du parent/tuteur</span>
-						</label>
-						<input
-							type="text"
-							v-model="form.guardianName"
-							placeholder="Nom complet du parent"
-							:class="[
-								'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50',
-								errors.guardianName ? 'border-red-500' : 'border-gray-300',
-							]"
+			<div class="mt-8 bg-white rounded-lg p-6 shadow">
+				<div
+					class="flex flex-col sm:flex-row sm:justify-between gap-4 sm:items-center"
+				>
+					<h3 class="flex gap-3 items-center font-bold text-base text-primary">
+						<font-awesome-icon
+							icon="graduation-cap"
+							class="p-2 rounded-lg bg-gray-200"
 						/>
-						<p v-if="errors.guardianName" class="text-xs text-red-500">
-							{{ errors.guardianName }}
-						</p>
-					</div>
+						<span>Parcours académique</span>
+					</h3>
+				</div>
 
-					<div class="space-y-3">
-						<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-							<font-awesome-icon icon="user-friends" />
-							<span>Relation</span>
-						</label>
-						<select
-							v-model="form.guardianRelation"
-							:class="[
-								'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50',
-								errors.guardianRelation ? 'border-red-500' : 'border-gray-300',
-							]"
+				<div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div class="space-y-4">
+						<h4 class="text-xs uppercase tracking-widest font-bold">
+							affectation actuelle <span class="text-red-500">*</span>
+						</h4>
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<span>Classe</span>
+							</label>
+							<select
+								v-model="selectedClassId"
+								class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+								required
+							>
+								<option value="">Sélectionner</option>
+								<option
+									v-for="cls in classStore.classes"
+									:key="cls.id"
+									:value="cls.id"
+								>
+									{{ cls.name }}
+								</option>
+							</select>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="mt-8 bg-white rounded-lg p-6 shadow">
+				<div
+					class="flex flex-col sm:flex-row sm:justify-between gap-4 sm:items-center"
+				>
+					<h3 class="flex gap-3 items-center font-bold text-base text-primary">
+						<font-awesome-icon
+							icon="users"
+							class="p-2 rounded-lg bg-gray-200"
+						/>
+						<span>Responsables légaux</span>
+					</h3>
+					<button
+						type="button"
+						@click="addGuardian"
+						class="bg-primary text-white hover:bg-primary/90 px-4 py-2 rounded-lg flex items-center gap-2"
+					>
+						<font-awesome-icon icon="plus-circle" />
+						<span>Ajouter un parent/tuteur</span>
+					</button>
+				</div>
+
+				<div class="mt-6 space-y-4">
+					<div
+						v-for="(guardian, index) in guardians"
+						:key="index"
+						class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-100 p-6 rounded-lg"
+					>
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<font-awesome-icon icon="user-tie" />
+								<span>Nom complet <span class="text-red-500">*</span></span>
+							</label>
+							<input
+								type="text"
+								v-model="guardian.name"
+								placeholder="Nom et prénom"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+								required
+							/>
+						</div>
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<font-awesome-icon icon="user-friends" />
+								<span>Relation <span class="text-red-500">*</span></span>
+							</label>
+							<select
+								v-model="guardian.relation"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+								required
+							>
+								<option value="">Sélectionner</option>
+								<option
+									v-for="rel in relationOptions"
+									:key="rel.value"
+									:value="rel.value"
+								>
+									{{ rel.label }}
+								</option>
+							</select>
+						</div>
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<font-awesome-icon icon="phone" />
+								<span>Téléphone <span class="text-red-500">*</span></span>
+							</label>
+							<input
+								type="text"
+								v-model="guardian.phone"
+								placeholder="Numéro de téléphone"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+								required
+							/>
+						</div>
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<font-awesome-icon icon="briefcase" />
+								<span>Profession</span>
+							</label>
+							<input
+								type="text"
+								v-model="guardian.profession"
+								placeholder="Profession"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+							/>
+						</div>
+						<div
+							class="mt-6 md:col-span-2 flex justify-between gap-4 items-center"
 						>
-							<option value="">Sélectionner...</option>
-							<option value="Père">Père</option>
-							<option value="Mère">Mère</option>
-							<option value="Tuteur">Tuteur</option>
-							<option value="Grand-parent">Grand-parent</option>
-							<option value="Autre">Autre</option>
-						</select>
-						<p v-if="errors.guardianRelation" class="text-xs text-red-500">
-							{{ errors.guardianRelation }}
-						</p>
-					</div>
-
-					<div class="space-y-3">
-						<label class="flex items-center gap-2 font-medium opacity-90 text-primary">
-							<font-awesome-icon icon="phone-alt" />
-							<span>Téléphone du parent</span>
-						</label>
-						<input
-							type="tel"
-							v-model="form.guardianPhone"
-							placeholder="Numéro de téléphone"
-							:class="[
-								'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50',
-								errors.guardianPhone ? 'border-red-500' : 'border-gray-300',
-							]"
-						/>
-						<p v-if="errors.guardianPhone" class="text-xs text-red-500">
-							{{ errors.guardianPhone }}
-						</p>
+							<div class="flex items-center gap-2">
+								<input
+									type="radio"
+									:name="`emergency-${index}`"
+									:checked="guardian.isEmergencyContact"
+									@change="setEmergencyContact(index)"
+									class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+								/>
+								<label class="text-xs font-medium opacity-90 cursor-pointer">
+									Contact d'urgence
+								</label>
+							</div>
+							<button
+								v-if="guardians.length > 1"
+								type="button"
+								@click="removeGuardian(index)"
+								class="bg-red-600/20 hover:bg-red-600/30 p-2 rounded-lg transition-colors"
+								title="Supprimer ce responsable"
+							>
+								<font-awesome-icon icon="trash" class="text-red-600/70" />
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
 
-			<div class="mt-8 flex justify-end gap-4">
+			<div class="mt-8 bg-white rounded-lg p-6 shadow">
+				<div
+					class="flex flex-col sm:flex-row sm:justify-between gap-4 sm:items-center"
+				>
+					<h3 class="flex gap-3 items-center font-bold text-base text-primary">
+						<font-awesome-icon
+							icon="clipboard-check"
+							class="p-2 rounded-lg bg-gray-200"
+						/>
+						<span>Service & finance</span>
+					</h3>
+				</div>
+
+				<div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div class="space-y-4">
+						<h4 class="uppercase text-xs tracking-widest font-bold">
+							services additionnels
+						</h4>
+						<div class="space-y-4">
+							<div
+								class="bg-gray-100 rounded-lg p-4 flex justify-between gap-4 items-center"
+							>
+								<div class="flex gap-4 items-center">
+									<font-awesome-icon
+										icon="bus"
+										class="p-2 text-xl text-blue-600/70 rounded-lg bg-gray-200"
+									/>
+									<div>
+										<h6 class="font-bold">Transport scolaire</h6>
+										<p class="opacity-60">Service de ramassage</p>
+									</div>
+								</div>
+								<label class="relative inline-flex items-center cursor-pointer">
+									<input
+										type="checkbox"
+										v-model="hasTransport"
+										class="sr-only peer"
+									/>
+									<div
+										class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"
+									></div>
+								</label>
+							</div>
+							<div
+								class="bg-gray-100 rounded-lg p-4 flex justify-between gap-4 items-center"
+							>
+								<div class="flex gap-4 items-center">
+									<font-awesome-icon
+										icon="spoon"
+										class="p-2 text-xl text-green-600/70 rounded-lg bg-gray-200"
+									/>
+									<div>
+										<h6 class="font-bold">Cantine</h6>
+										<p class="opacity-60">Repas du midi</p>
+									</div>
+								</div>
+								<label class="relative inline-flex items-center cursor-pointer">
+									<input
+										type="checkbox"
+										v-model="hasCanteen"
+										class="sr-only peer"
+									/>
+									<div
+										class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"
+									></div>
+								</label>
+							</div>
+						</div>
+					</div>
+
+					<div class="space-y-4">
+						<h4 class="uppercase text-xs tracking-widest font-bold">finance</h4>
+						<div class="space-y-3">
+							<label
+								class="flex items-center gap-2 font-medium opacity-90 text-primary"
+							>
+								<span>Mode de paiement</span>
+							</label>
+							<select
+								v-model="paymentMode"
+								class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+							>
+								<option value="">Sélectionner</option>
+								<option
+									v-for="mode in paymentModes"
+									:key="mode.value"
+									:value="mode.value"
+								>
+									{{ mode.label }}
+								</option>
+							</select>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="mt-8 bg-white rounded-lg p-6 shadow">
+				<div
+					class="flex flex-col sm:flex-row sm:justify-between gap-4 sm:items-center"
+				>
+					<h3 class="flex gap-3 items-center font-bold text-base text-primary">
+						<font-awesome-icon
+							icon="folder"
+							class="p-2 rounded-lg bg-gray-200"
+						/>
+						<span>Documents joints</span>
+					</h3>
+				</div>
+				<p class="mt-3">
+					Veuillez cocher les documents déjà joints par l'élève
+				</p>
+
+				<div class="mt-8 space-y-4">
+					<div class="flex items-center gap-2">
+						<input
+							type="checkbox"
+							v-model="documents.birthCertificate"
+							class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+						/>
+						<label class="font-medium text-primary cursor-pointer">
+							Bulletin de naissance / Copie d'acte de naissance / CIN
+						</label>
+					</div>
+					<div class="flex items-center gap-2">
+						<input
+							type="checkbox"
+							v-model="documents.photoId"
+							class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+						/>
+						<label class="font-medium text-primary cursor-pointer">
+							Photo d'identité
+						</label>
+					</div>
+					<div class="flex items-center gap-2">
+						<input
+							type="checkbox"
+							v-model="documents.residenceCertificate"
+							class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary"
+						/>
+						<label class="font-medium text-primary cursor-pointer">
+							Certificat de résidence
+						</label>
+					</div>
+				</div>
+			</div>
+
+			<div class="mt-12 mb-8 flex flex-col md:flex-row md:justify-end gap-4">
 				<button
 					type="button"
-					@click="handleCancel"
-					class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+					@click="router.push('/dashboard/students/list')"
+					class="md:w-44 px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
 				>
 					Annuler
 				</button>
 				<button
 					type="submit"
 					:disabled="isLoading"
-					class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+					class="md:w-44 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
 				>
-					<span v-if="isLoading" class="loading loading-spinner loading-sm"></span>
-					<span v-else>Enregistrer</span>
+					<span
+						v-if="isLoading"
+						class="loading loading-spinner loading-sm"
+					></span>
+					<span>{{ isLoading ? "Enregistrement..." : "Enregistrer" }}</span>
 				</button>
 			</div>
 		</form>
