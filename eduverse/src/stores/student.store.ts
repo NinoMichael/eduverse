@@ -134,6 +134,23 @@ export const useStudentStore = defineStore("student", () => {
 		return false;
 	}
 
+	async function createStudentFromForm(schoolId: string, schoolYearId: string, data: StudentFormData): Promise<boolean> {
+		isLoading.value = true;
+		error.value = null;
+
+		const response = await unifiedStudentService.createStudent(schoolId, schoolYearId, data);
+
+		if (response.success && response.data) {
+			students.value.unshift(response.data);
+			isLoading.value = false;
+			return true;
+		}
+
+		error.value = response.error || "Erreur lors de la création de l'étudiant";
+		isLoading.value = false;
+		return false;
+	}
+
 	async function updateStudent(id: string, data: Partial<StudentFormData>): Promise<boolean> {
 		isLoading.value = true;
 		error.value = null;
@@ -232,6 +249,7 @@ export const useStudentStore = defineStore("student", () => {
 		fetchStudents,
 		fetchStudentStats,
 		createStudent,
+		createStudentFromForm,
 		updateStudent,
 		deleteStudent,
 		setFilter,

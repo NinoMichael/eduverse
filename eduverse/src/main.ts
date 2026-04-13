@@ -73,6 +73,11 @@ import {
 	faUserTie,
 	faUserFriends,
 	faEye,
+	faCamera,
+	faBriefcase,
+	faBus,
+	faSpoon,
+	faFolder,
 } from "@fortawesome/free-solid-svg-icons";
 
 library.add(
@@ -140,7 +145,13 @@ library.add(
 	faEnvelope,
 	faUserTie,
 	faUserFriends,
-	faEye
+	faEye,
+	faCamera,
+	faGraduationCap,
+	faBriefcase,
+	faBus,
+	faSpoon,
+	faFolder
 );
 
 const app = createApp(App);

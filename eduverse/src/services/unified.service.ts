@@ -10,8 +10,11 @@ import { schoolYearService } from "./school-year.service";
 import { mockSchoolYearService } from "./mock/school-year.service";
 import { studentService } from "./student.service";
 import { mockStudentService } from "./mock/student.service";
+import { classService } from "./class.service";
+import { mockClassService } from "./mock/class.service";
 import type { SchoolYear, SchoolYearFormData, SchoolYearEvent, SchoolYearEventFormData, SchoolYearConfiguration } from "@/types/school-year";
 import type { Student, StudentFormData, StudentFilters, StudentStats } from "@/types/student";
+import type { SchoolClass, ClassFormData } from "@/types/class";
 
 const useMockServices = !isRunningInTauri();
 
@@ -222,10 +225,52 @@ class UnifiedStudentService {
 	}
 }
 
+class UnifiedClassService {
+	async getClasses(schoolId: string, schoolYearId: string): Promise<ApiResponse<SchoolClass[]>> {
+		if (useMockServices) {
+			return mockClassService.getClasses(schoolId, schoolYearId);
+		}
+		return classService.getClasses(schoolId, schoolYearId);
+	}
+
+	async getClassById(id: string): Promise<ApiResponse<SchoolClass>> {
+		if (useMockServices) {
+			return mockClassService.getClassById(id);
+		}
+		return classService.getClassById(id);
+	}
+
+	async createClass(
+		schoolId: string,
+		schoolYearId: string,
+		data: ClassFormData
+	): Promise<ApiResponse<SchoolClass>> {
+		if (useMockServices) {
+			return mockClassService.createClass(schoolId, schoolYearId, data);
+		}
+		return classService.createClass(schoolId, schoolYearId, data);
+	}
+
+	async updateClass(id: string, data: Partial<ClassFormData>): Promise<ApiResponse<SchoolClass>> {
+		if (useMockServices) {
+			return mockClassService.updateClass(id, data);
+		}
+		return classService.updateClass(id, data);
+	}
+
+	async deleteClass(id: string): Promise<ApiResponse<void>> {
+		if (useMockServices) {
+			return mockClassService.deleteClass(id);
+		}
+		return classService.deleteClass(id);
+	}
+}
+
 export const unifiedAuthService = new UnifiedAuthService();
 export const unifiedDashboardService = new UnifiedDashboardService();
 export const unifiedActivationService = new UnifiedActivationService();
 export const unifiedSchoolYearService = new UnifiedSchoolYearService();
 export const unifiedStudentService = new UnifiedStudentService();
+export const unifiedClassService = new UnifiedClassService();
 
 export const isDebugMode = useMockServices;

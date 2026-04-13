@@ -4,7 +4,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useStudentStore } from "@/stores/student.store";
 import { useSchoolYearStore } from "@/stores/school-year.store";
 import { useToast } from "@/composables/useToast";
-import type { StudentFormData, Gender, Student } from "@/types/student";
+import type { StudentFormData, Gender, Student, Guardian, StudentSchoolHistory, StudentServices, StudentDocuments, EnrollmentType } from "@/types/student";
 
 defineOptions({
 	layout: false,
@@ -33,6 +33,11 @@ const form = ref<StudentFormData>({
 	guardianPhone: "",
 	guardianRelation: "",
 	classId: null,
+	enrollmentType: "new" as EnrollmentType,
+	guardians: [] as Guardian[],
+	schoolHistory: null as StudentSchoolHistory | null,
+	services: { hasTransport: false, hasCanteen: false } as StudentServices,
+	documents: { birthCertificate: false, photoId: false, residenceCertificate: false } as StudentDocuments,
 });
 
 const errors = ref<Record<string, string>>({});
@@ -111,6 +116,11 @@ onMounted(async () => {
 				guardianPhone: student.guardianPhone,
 				guardianRelation: student.guardianRelation,
 				classId: student.classId,
+				enrollmentType: student.enrollmentType || "new",
+				guardians: student.schoolHistory ? [] : [],
+				schoolHistory: student.schoolHistory || null,
+				services: student.services || { hasTransport: false, hasCanteen: false },
+				documents: student.documents || { birthCertificate: false, photoId: false, residenceCertificate: false },
 			};
 		} else {
 			toast.error("Étudiant non trouvé");

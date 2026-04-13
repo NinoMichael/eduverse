@@ -1,5 +1,5 @@
 import type { ApiResponse } from "../auth.service";
-import type { Student, StudentFormData, StudentFilters, StudentStats, Gender } from "@/types/student";
+import type { Student, StudentFormData, StudentFilters, StudentStats, Gender, EnrollmentType } from "@/types/student";
 import { db } from "./storage";
 
 const STUDENTS_COLLECTION = "students";
@@ -8,10 +8,11 @@ const generateId = (): string => {
 	return "id_" + Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
-const generateMatricule = (): string => {
+const generateMatricule = (enrollmentType: EnrollmentType = "new"): string => {
 	const year = new Date().getFullYear();
 	const random = Math.floor(Math.random() * 100000).toString().padStart(5, "0");
-	return `COL-${year}${random}`;
+	const prefix = enrollmentType === "transfer" ? "TRF" : enrollmentType === "re_enrollment" ? "REN" : "COL";
+	return `${prefix}-${year}${random}`;
 };
 
 const getStudents = (): Student[] => {
@@ -87,9 +88,13 @@ const mockStudents: Omit<Student, "id" | "createdAt" | "updatedAt">[] = Array.fr
 		enrollmentDate: isReEnroll 
 			? `${enrollmentYear - 1}-09-${Math.floor(Math.random() * 28) + 1}`
 			: `${enrollmentYear}-${enrollMonth.toString().padStart(2, "0")}-${Math.floor(Math.random() * 28) + 1}`,
+		enrollmentType: isReEnroll ? "re_enrollment" : "new",
 		photoUrl: gender === "male" 
 			? `https://randomuser.me/api/portraits/men/${(i % 70) + 1}.jpg`
 			: `https://randomuser.me/api/portraits/women/${(i % 70) + 1}.jpg`,
+		schoolHistory: null,
+		services: { hasTransport: false, hasCanteen: false },
+		documents: { birthCertificate: true, photoId: true, residenceCertificate: false },
 	};
 });
 
@@ -145,27 +150,33 @@ export class MockStudentService {
 		data: StudentFormData
 	): Promise<ApiResponse<Student>> {
 		try {
+			const primaryGuardian = data.guardians?.find((g) => g.isEmergencyContact) || data.guardians?.[0];
+
 			const newStudent: Student = {
 				id: generateId(),
 				schoolId,
 				schoolYearId,
 				firstName: data.firstName,
 				lastName: data.lastName,
-				matricule: generateMatricule(),
+				matricule: generateMatricule(data.enrollmentType || "new"),
 				gender: data.gender,
 				dateOfBirth: data.dateOfBirth,
 				placeOfBirth: data.placeOfBirth,
 				address: data.address,
 				phone: data.phone,
 				email: data.email,
-				guardianName: data.guardianName,
-				guardianPhone: data.guardianPhone,
-				guardianRelation: data.guardianRelation,
+				guardianName: primaryGuardian?.name || data.guardianName || "",
+				guardianPhone: primaryGuardian?.phone || data.guardianPhone || "",
+				guardianRelation: primaryGuardian?.relation || data.guardianRelation || "",
 				classId: data.classId,
 				className: null,
 				status: "active",
 				enrollmentDate: new Date().toISOString().split("T")[0],
-				photoUrl: null,
+				enrollmentType: data.enrollmentType || "new",
+				photoUrl: data.photoUrl || null,
+				schoolHistory: data.schoolHistory || null,
+				services: data.services || { hasTransport: false, hasCanteen: false },
+				documents: data.documents || { birthCertificate: false, photoId: false, residenceCertificate: false },
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 			};
