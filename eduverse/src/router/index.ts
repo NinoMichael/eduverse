@@ -21,6 +21,7 @@ import SchoolYearConfigureEvent from "@/views/dashboard/school-year/configure-ev
 import StudentsList from "@/views/dashboard/students/list.vue";
 import StudentsCreate from "@/views/dashboard/students/create.vue";
 import StudentsEdit from "@/views/dashboard/students/edit.vue";
+import StudentsFile from "@/views/dashboard/students/file.vue";
 
 import DashboardTeachers from "@/views/dashboard/teachers.vue";
 import DashboardClasses from "@/views/dashboard/classes.vue";
@@ -133,6 +134,11 @@ const routes: RouteRecordRaw[] = [
 				path: "students/edit/:id",
 				name: "EditStudent",
 				component: StudentsEdit,
+			},
+			{
+				path: "students/file/:id",
+				name: "FileStudent",
+				component: StudentsFile,
 			},
 			{
 				path: "teachers",

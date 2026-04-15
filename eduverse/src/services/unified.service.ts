@@ -13,7 +13,7 @@ import { mockStudentService } from "./mock/student.service";
 import { classService } from "./class.service";
 import { mockClassService } from "./mock/class.service";
 import type { SchoolYear, SchoolYearFormData, SchoolYearEvent, SchoolYearEventFormData, SchoolYearConfiguration } from "@/types/school-year";
-import type { Student, StudentFormData, StudentFilters, StudentStats } from "@/types/student";
+import type { Student, StudentFormData, StudentFilters, StudentStats, StudentSchoolPath } from "@/types/student";
 import type { SchoolClass, ClassFormData } from "@/types/class";
 
 const useMockServices = !isRunningInTauri();
@@ -222,6 +222,13 @@ class UnifiedStudentService {
 			return mockStudentService.filterStudents(students, filters);
 		}
 		return studentService.filterStudents(students, filters);
+	}
+
+	async getStudentSchoolPath(studentId: string): Promise<ApiResponse<StudentSchoolPath>> {
+		if (useMockServices) {
+			return mockStudentService.getStudentSchoolPath(studentId);
+		}
+		return studentService.getStudentSchoolPath(studentId);
 	}
 }
 

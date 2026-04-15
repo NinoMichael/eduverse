@@ -78,7 +78,12 @@ import {
 	faBus,
 	faSpoon,
 	faFolder,
+	faHistory,
+	faWebAwesome,
+	faAward,
+	faArrowTrendUp,
 } from "@fortawesome/free-solid-svg-icons";
+import { faFilePen } from "@fortawesome/free-solid-svg-icons/faFilePen";
 
 library.add(
 	faUser,
@@ -151,7 +156,12 @@ library.add(
 	faBriefcase,
 	faBus,
 	faSpoon,
-	faFolder
+	faFolder,
+	faHistory,
+	faFilePen,
+	faWebAwesome,
+	faAward,
+	faArrowTrendUp
 );
 
 const app = createApp(App);

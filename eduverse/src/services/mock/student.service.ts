@@ -1,5 +1,5 @@
 import type { ApiResponse } from "../auth.service";
-import type { Student, StudentFormData, StudentFilters, StudentStats, Gender, EnrollmentType } from "@/types/student";
+import type { Student, StudentFormData, StudentFilters, StudentStats, Gender, EnrollmentType, StudentSchoolPath, StudentEnrollmentHistory } from "@/types/student";
 import { db } from "./storage";
 
 const STUDENTS_COLLECTION = "students";
@@ -272,6 +272,111 @@ export class MockStudentService {
 			
 			return searchMatch && genderMatch && classMatch;
 		});
+	}
+
+	async getStudentSchoolPath(studentId: string): Promise<ApiResponse<StudentSchoolPath>> {
+		try {
+			const students = getStudents();
+			const student = students.find((s) => s.id === studentId);
+			
+			if (!student) {
+				return { success: false, error: "Étudiant non trouvé" };
+			}
+
+			const schoolYearsRaw = db.get<{ id: string; name: string; isActive?: boolean }[]>("school_years", []);
+			const schoolYears = schoolYearsRaw ?? [];
+			const classesRaw = db.get<{ id: string; name: string }[]>("classes", []);
+			const classes = classesRaw ?? [];
+
+			const enrollmentYear = new Date(student.enrollmentDate).getFullYear();
+			const currentYear = new Date().getFullYear();
+			const yearsToShow = Math.min(currentYear - enrollmentYear + 1, 6);
+
+			const repeatingYears: string[] = [];
+			if (student.schoolHistory?.isRepeating) {
+				const repeatCount = Math.floor(Math.random() * 2) + 1;
+				for (let i = 0; i < repeatCount && i < yearsToShow - 1; i++) {
+					const yearIdx = Math.floor(Math.random() * (yearsToShow - 1)) + 1;
+					if (schoolYears[yearIdx]) {
+						repeatingYears.push(schoolYears[yearIdx].name);
+					}
+				}
+			}
+
+			const enrollmentHistory: StudentEnrollmentHistory[] = [];
+			const diplomaClasses: Record<string, string> = {
+				"6ème Primaire": "CEPE",
+				"5ème Primaire": "CEPE",
+				"CM1": "CEPE",
+				"CM2": "CEPE",
+				"6ème Secondaire": "BEPC",
+				"5ème Secondaire": "BEPC",
+				"4ème Secondaire": "BEPC",
+				"3ème Secondaire": "BEPC",
+				"Seconde": "Baccalauréat",
+				"Première L": "Baccalauréat",
+				"Première S": "Baccalauréat",
+				"Terminale L": "Baccalauréat",
+				"Terminale S": "Baccalauréat",
+				"Terminale ES": "Baccalauréat",
+			};
+
+			const cycleMilestones: Record<string, string> = {
+				"CM2": "CEPE",
+				"3ème Secondaire": "BEPC",
+				"Terminale L": "Baccalauréat",
+				"Terminale S": "Baccalauréat",
+				"Terminale ES": "Baccalauréat",
+			};
+
+			for (let i = 0; i < yearsToShow; i++) {
+				const yearOffset = i;
+				const targetYear = enrollmentYear + yearOffset;
+				const syIndex = schoolYears.findIndex((y) => y.name.includes(targetYear.toString()));
+				const schoolYearObj = syIndex >= 0 ? schoolYears[syIndex] : { id: `year_${yearOffset}`, name: `${targetYear}-${targetYear + 1}`, isActive: false };
+
+				let classIndex = i;
+				if (repeatingYears.includes(schoolYearObj.name)) {
+					classIndex = i - 1;
+				}
+				classIndex = Math.max(0, classIndex);
+
+				const cls = classes[classIndex % classes.length] || { id: null, name: null };
+				const diploma = diplomaClasses[cls.name] || null;
+				const isMilestone = cls.name in cycleMilestones;
+				const isLastYear = i === yearsToShow - 1;
+				const result = isMilestone && !isLastYear ? diploma : (isLastYear ? null : null);
+
+				enrollmentHistory.push({
+					schoolYearId: schoolYearObj.id,
+					schoolYearName: schoolYearObj.name,
+					classId: cls.id || null,
+					className: cls.name || null,
+					enrollmentDate: `${targetYear}-09-01`,
+					results: result,
+				});
+			}
+
+			const currentSy = schoolYears.find((y) => y.isActive) || schoolYears[schoolYears.length - 1];
+
+			const schoolPath: StudentSchoolPath = {
+				studentId: student.id,
+				currentEnrollment: {
+					enrollmentDate: student.enrollmentDate,
+					enrollmentType: student.enrollmentType,
+					schoolYearName: currentSy?.name || enrollmentHistory[enrollmentHistory.length - 1]?.schoolYearName || "-",
+					className: student.className,
+				},
+				enrollmentHistory: enrollmentHistory.reverse(),
+				previousSchool: student.schoolHistory?.previousSchool || null,
+				isRepeating: student.schoolHistory?.isRepeating || false,
+				repeatingYears,
+			};
+
+			return { success: true, data: schoolPath };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
 	}
 }
 

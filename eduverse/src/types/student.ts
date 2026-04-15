@@ -90,3 +90,26 @@ export interface StudentStats {
 	newEnrollments: number;
 	withdrawn: number;
 }
+
+export interface StudentEnrollmentHistory {
+	schoolYearId: string;
+	schoolYearName: string;
+	classId: string | null;
+	className: string | null;
+	enrollmentDate: string;
+	results: string | null;
+}
+
+export interface StudentSchoolPath {
+	studentId: string;
+	currentEnrollment: {
+		enrollmentDate: string;
+		enrollmentType: EnrollmentType;
+		schoolYearName: string;
+		className: string | null;
+	};
+	enrollmentHistory: StudentEnrollmentHistory[];
+	previousSchool: string | null;
+	isRepeating: boolean;
+	repeatingYears: string[];
+}

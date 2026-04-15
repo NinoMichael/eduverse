@@ -59,6 +59,11 @@ const handleResetFilters = () => {
 	studentStore.resetFilters();
 };
 
+const handleViewFile = (id: string) => {
+	closeMenu();
+	router.push(`/dashboard/students/file/${id}`);
+};
+
 const handleEdit = (id: string) => {
 	closeMenu();
 	router.push(`/dashboard/students/edit/${id}`);
@@ -296,10 +301,10 @@ onMounted(async () => {
 								>
 									<button
 										class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-										@click="handleEdit(student.id)"
+										@click="handleViewFile(student.id)"
 									>
 										<font-awesome-icon icon="eye" />
-										Voir détails
+										Voir fiche
 									</button>
 									<button
 										class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"

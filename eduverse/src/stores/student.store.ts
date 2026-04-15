@@ -3,7 +3,7 @@ import { ref, computed } from "vue";
 import { unifiedStudentService } from "@/services/unified.service";
 import { useAuthStore } from "./auth.store";
 import { useSchoolYearStore } from "./school-year.store";
-import type { Student, StudentFilters, StudentStats, StudentFormData } from "@/types/student";
+import type { Student, StudentFilters, StudentStats, StudentFormData, StudentSchoolPath } from "@/types/student";
 
 export const useStudentStore = defineStore("student", () => {
 	const students = ref<Student[]>([]);
@@ -220,8 +220,38 @@ export const useStudentStore = defineStore("student", () => {
 		error.value = null;
 	}
 
+	async function fetchStudentById(id: string): Promise<boolean> {
+		isLoading.value = true;
+		error.value = null;
+
+		const response = await unifiedStudentService.getStudentById(id);
+
+		if (response.success && response.data) {
+			const index = students.value.findIndex((s) => s.id === id);
+			if (index >= 0) {
+				students.value[index] = response.data;
+			} else {
+				students.value.push(response.data);
+			}
+			isLoading.value = false;
+			return true;
+		}
+
+		error.value = response.error || "Erreur lors du chargement de l'étudiant";
+		isLoading.value = false;
+		return false;
+	}
+
 	function getStudentById(id: string): Student | undefined {
 		return students.value.find((s) => s.id === id);
+	}
+
+	async function fetchStudentSchoolPath(studentId: string): Promise<StudentSchoolPath | null> {
+		const response = await unifiedStudentService.getStudentSchoolPath(studentId);
+		if (response.success && response.data) {
+			return response.data;
+		}
+		return null;
 	}
 
 	function getUniqueClasses(): { id: string; name: string }[] {
@@ -256,8 +286,10 @@ export const useStudentStore = defineStore("student", () => {
 		applyFilters,
 		resetFilters,
 		clearError,
+		fetchStudentById,
 		getStudentById,
 		getUniqueClasses,
+		fetchStudentSchoolPath,
 		setPage,
 		setItemsPerPage,
 	};

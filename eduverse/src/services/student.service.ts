@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { ApiResponse } from "./auth.service";
-import type { Student, StudentFormData, StudentFilters, StudentStats } from "@/types/student";
+import type { Student, StudentFormData, StudentFilters, StudentStats, StudentSchoolPath } from "@/types/student";
 
 class StudentService {
 	async getStudents(schoolId: string, schoolYearId: string): Promise<ApiResponse<Student[]>> {
@@ -79,6 +79,15 @@ class StudentService {
 				schoolId,
 				schoolYearId,
 			});
+			return { success: true, data: response };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	}
+
+	async getStudentSchoolPath(studentId: string): Promise<ApiResponse<StudentSchoolPath>> {
+		try {
+			const response = await invoke<StudentSchoolPath>("get_student_school_path", { studentId });
 			return { success: true, data: response };
 		} catch (error) {
 			return { success: false, error: String(error) };
