@@ -1,5 +1,5 @@
 import type { ApiResponse } from "../auth.service";
-import type { Student, StudentFormData, StudentFilters, StudentStats, Gender, EnrollmentType, StudentSchoolPath, StudentEnrollmentHistory } from "@/types/student";
+import type { Student, StudentFormData, StudentFilters, StudentStats, Gender, EnrollmentType, StudentSchoolPath, StudentEnrollmentHistory, Guardian } from "@/types/student";
 import { db } from "./storage";
 
 const STUDENTS_COLLECTION = "students";
@@ -82,6 +82,22 @@ const mockStudents: Omit<Student, "id" | "createdAt" | "updatedAt">[] = Array.fr
 		guardianName: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastName}`,
 		guardianPhone: `+225 ${Math.floor(Math.random() * 90000000 + 10000000)}`,
 		guardianRelation: relations[Math.floor(Math.random() * relations.length)],
+		guardians: [
+			{
+				name: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastName}`,
+				relation: relations[Math.floor(Math.random() * relations.length)],
+				phone: `+225 ${Math.floor(Math.random() * 90000000 + 10000000)}`,
+				profession: ["Enseignant", "Médecin", "Ingénieur", "Commerçant", "Fonctionnaire"][Math.floor(Math.random() * 5)],
+				isEmergencyContact: true,
+			},
+			{
+				name: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastName}`,
+				relation: relations[Math.floor(Math.random() * relations.length)],
+				phone: `+225 ${Math.floor(Math.random() * 90000000 + 10000000)}`,
+				profession: ["Enseignant", "Médecin", "Ingénieur", "Commerçant", "Fonctionnaire"][Math.floor(Math.random() * 5)],
+				isEmergencyContact: false,
+			},
+		],
 		classId: cls.id,
 		className: cls.name,
 		status: isWithdrawn ? "withdrawn" : "active",
@@ -105,16 +121,42 @@ export class MockStudentService {
 			
 			if (students.length === 0) {
 				console.log('[MockStudentService] Initializing mock students with schoolId:', schoolId, 'schoolYearId:', schoolYearId);
-				students = mockStudents.map((s) => ({
-					...s,
-					schoolId: schoolId,
-					schoolYearId: schoolYearId,
-					id: generateId(),
-					createdAt: new Date().toISOString(),
-					updatedAt: new Date().toISOString(),
-				}));
+				students = mockStudents.map((s) => {
+					const studentId = generateId();
+					return {
+						...s,
+						schoolId: schoolId,
+						schoolYearId: schoolYearId,
+						id: studentId,
+						createdAt: new Date().toISOString(),
+						updatedAt: new Date().toISOString(),
+					};
+				});
 				db.set(STUDENTS_COLLECTION, students);
-				console.log('[MockStudentService] Created', students.length, 'students');
+				
+			// Créer les responsables pour chaque étudiant
+			const guardians = db.get<Guardian[]>("guardians", []) ?? [];
+			students.forEach((student: any) => {
+				if (student.guardians && Array.isArray(student.guardians)) {
+					(student.guardians as any[]).forEach((g) => {
+						guardians.push({
+							id: generateId(),
+							studentId: student.id,
+							name: g.name,
+							relation: g.relation,
+							phone: g.phone,
+							profession: g.profession,
+							isEmergencyContact: g.isEmergencyContact,
+							createdAt: new Date().toISOString(),
+						});
+					});
+					// Nettoyer la propriété temporaire
+					delete student.guardians;
+				}
+			});
+				db.set("guardians", guardians);
+				
+				console.log('[MockStudentService] Created', students.length, 'students with guardians');
 			}
 			
 			const filtered = students.filter(
@@ -204,6 +246,28 @@ export class MockStudentService {
 			};
 			
 			saveStudent(updated);
+
+			// Si des guardians sont fournis, les sauvegarder
+			if (data.guardians && Array.isArray(data.guardians)) {
+				const guardians = db.get<Guardian[]>("guardians", []) ?? [];
+				// Supprimer les anciens guardians de cet étudiant
+				const filteredGuardians = guardians.filter((g: any) => g.studentId !== id);
+				// Ajouter les nouveaux
+				data.guardians.forEach((g: any) => {
+					filteredGuardians.push({
+						id: g.id || generateId(),
+						studentId: id,
+						name: g.name,
+						relation: g.relation,
+						phone: g.phone,
+						profession: g.profession,
+						isEmergencyContact: g.isEmergencyContact,
+						createdAt: g.createdAt || new Date().toISOString(),
+					});
+				});
+				db.set("guardians", filteredGuardians);
+			}
+			
 			return { success: true, data: updated };
 		} catch (error) {
 			return { success: false, error: String(error) };

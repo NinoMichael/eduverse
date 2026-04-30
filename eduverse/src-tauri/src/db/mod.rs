@@ -107,6 +107,19 @@ pub fn init_db() -> SqliteResult<()> {
         CREATE INDEX IF NOT EXISTS idx_students_school_id ON students(school_id);
         CREATE INDEX IF NOT EXISTS idx_students_class_id ON students(class_id);
         CREATE INDEX IF NOT EXISTS idx_schedules_day_time ON schedules(day_of_week, start_time);
+        CREATE TABLE IF NOT EXISTS guardians (
+            id TEXT PRIMARY KEY,
+            student_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            relation TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            profession TEXT,
+            is_emergency_contact INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (student_id) REFERENCES students(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_guardians_student_id ON guardians(student_id);
         CREATE INDEX IF NOT EXISTS idx_school_years_active ON school_years(is_active);
         ",
     )?;

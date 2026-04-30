@@ -1,6 +1,6 @@
 mod db;
 
-use db::models::{AuthResponse, DashboardData, LoginCredentials, RegisterPayload, SchoolYear};
+use db::models::{AuthResponse, DashboardData, Guardian, LoginCredentials, RegisterPayload, SchoolYear};
 use db::repository;
 
 #[tauri::command]
@@ -84,6 +84,40 @@ fn validate_license_local(
     Ok(valid_keys.contains(&private_key.as_str()))
 }
 
+#[tauri::command]
+fn get_guardians_by_student_id(student_id: String) -> Result<Vec<Guardian>, String> {
+    repository::handle_get_guardians_by_student_id(&student_id)
+}
+
+#[tauri::command]
+fn create_guardian(
+    student_id: String,
+    name: String,
+    relation: String,
+    phone: String,
+    profession: Option<String>,
+    is_emergency_contact: bool,
+) -> Result<Guardian, String> {
+    repository::handle_create_guardian(&student_id, &name, &relation, &phone, profession.as_deref(), is_emergency_contact)
+}
+
+#[tauri::command]
+fn update_guardian(
+    id: String,
+    name: String,
+    relation: String,
+    phone: String,
+    profession: Option<String>,
+    is_emergency_contact: bool,
+) -> Result<Guardian, String> {
+    repository::handle_update_guardian(&id, &name, &relation, &phone, profession.as_deref(), is_emergency_contact)
+}
+
+#[tauri::command]
+fn delete_guardian(id: String) -> Result<(), String> {
+    repository::handle_delete_guardian(&id)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     db::init_db().expect("Failed to initialize database");
@@ -103,7 +137,11 @@ pub fn run() {
             close_school_year,
             delete_school_year,
             validate_license,
-            validate_license_local
+            validate_license_local,
+            get_guardians_by_student_id,
+            create_guardian,
+            update_guardian,
+            delete_guardian
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

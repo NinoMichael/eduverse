@@ -134,6 +134,19 @@ pub struct Teacher {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct Guardian {
+    pub id: String,
+    pub student_id: String,
+    pub name: String,
+    pub relation: String,
+    pub phone: String,
+    pub profession: Option<String>,
+    pub is_emergency_contact: bool,
+    pub created_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ScheduleItem {
     pub id: String,
     pub class_name: String,

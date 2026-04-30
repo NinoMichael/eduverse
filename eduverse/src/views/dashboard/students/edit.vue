@@ -5,6 +5,7 @@ import { useStudentStore } from "@/stores/student.store";
 import { useClassStore } from "@/stores/class.store";
 import { useSchoolYearStore } from "@/stores/school-year.store";
 import { useToast } from "@/composables/useToast";
+import { unifiedGuardianService } from "@/services/unified.service";
 import type {
 	Gender,
 	Guardian,
@@ -221,20 +222,27 @@ onMounted(async () => {
 			residenceCertificate: false,
 		};
 
-		if (
-			student.guardianName ||
-			student.guardianPhone ||
-			student.guardianRelation
-		) {
-			guardians.value = [
-				{
-					name: student.guardianName,
-					relation: student.guardianRelation,
-					phone: student.guardianPhone,
-					profession: "",
-					isEmergencyContact: true,
-				},
-			];
+		// Charger les responsables depuis le service
+		const guardiansResponse = await unifiedGuardianService.getGuardiansByStudentId(studentId.value);
+		if (guardiansResponse.success && guardiansResponse.data && guardiansResponse.data.length > 0) {
+			guardians.value = guardiansResponse.data;
+		} else {
+			// Fallback sur les anciens champs si pas de responsables en base
+			if (
+				student.guardianName ||
+				student.guardianPhone ||
+				student.guardianRelation
+			) {
+				guardians.value = [
+					{
+						name: student.guardianName,
+						relation: student.guardianRelation,
+						phone: student.guardianPhone,
+						profession: "",
+						isEmergencyContact: true,
+					},
+				];
+			}
 		}
 	} else {
 		toast.error("Étudiant non trouvé");

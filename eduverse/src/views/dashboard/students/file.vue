@@ -190,7 +190,7 @@ onMounted(async () => {
 				v-else-if="activeTab === 'schoolPath'"
 				:studentId="studentId"
 			/>
-			<StudentGuardiansTab v-else-if="activeTab === 'guardians'" />
+			<StudentGuardiansTab v-else-if="activeTab === 'guardians'" :studentId="studentId" />
 			<StudentGradesTab v-else-if="activeTab === 'grades'" />
 			<StudentAttendanceTab v-else-if="activeTab === 'attendance'" />
 			<StudentFinanceTab v-else-if="activeTab === 'finance'" />

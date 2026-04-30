@@ -4,11 +4,13 @@ export type EnrollmentType = "new" | "re_enrollment" | "transfer";
 
 export interface Guardian {
 	id?: string;
+	studentId?: string;
 	name: string;
 	relation: string;
 	phone: string;
 	profession: string;
 	isEmergencyContact: boolean;
+	createdAt?: string;
 }
 
 export interface StudentSchoolHistory {

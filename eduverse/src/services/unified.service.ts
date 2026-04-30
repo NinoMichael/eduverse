@@ -12,8 +12,10 @@ import { studentService } from "./student.service";
 import { mockStudentService } from "./mock/student.service";
 import { classService } from "./class.service";
 import { mockClassService } from "./mock/class.service";
+import { guardianService } from "./guardian.service";
+import { mockGuardianService } from "./mock/guardian.service";
 import type { SchoolYear, SchoolYearFormData, SchoolYearEvent, SchoolYearEventFormData, SchoolYearConfiguration } from "@/types/school-year";
-import type { Student, StudentFormData, StudentFilters, StudentStats, StudentSchoolPath } from "@/types/student";
+import type { Student, StudentFormData, StudentFilters, StudentStats, StudentSchoolPath, Guardian } from "@/types/student";
 import type { SchoolClass, ClassFormData } from "@/types/class";
 
 const useMockServices = !isRunningInTauri();
@@ -279,5 +281,43 @@ export const unifiedActivationService = new UnifiedActivationService();
 export const unifiedSchoolYearService = new UnifiedSchoolYearService();
 export const unifiedStudentService = new UnifiedStudentService();
 export const unifiedClassService = new UnifiedClassService();
+
+class UnifiedGuardianService {
+	async getGuardiansByStudentId(studentId: string): Promise<ApiResponse<Guardian[]>> {
+		if (useMockServices) {
+			return mockGuardianService.getGuardiansByStudentId(studentId);
+		}
+		return guardianService.getGuardiansByStudentId(studentId);
+	}
+
+	async createGuardian(
+		studentId: string,
+		data: Omit<Guardian, "id" | "studentId" | "createdAt">
+	): Promise<ApiResponse<Guardian>> {
+		if (useMockServices) {
+			return mockGuardianService.createGuardian(studentId, data);
+		}
+		return guardianService.createGuardian(studentId, data);
+	}
+
+	async updateGuardian(
+		id: string,
+		data: Omit<Guardian, "id" | "studentId" | "createdAt">
+	): Promise<ApiResponse<Guardian>> {
+		if (useMockServices) {
+			return mockGuardianService.updateGuardian(id, data);
+		}
+		return guardianService.updateGuardian(id, data);
+	}
+
+	async deleteGuardian(id: string): Promise<ApiResponse<void>> {
+		if (useMockServices) {
+			return mockGuardianService.deleteGuardian(id);
+		}
+		return guardianService.deleteGuardian(id);
+	}
+}
+
+export const unifiedGuardianService = new UnifiedGuardianService();
 
 export const isDebugMode = useMockServices;

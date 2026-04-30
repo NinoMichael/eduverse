@@ -515,3 +515,152 @@ pub fn handle_close_school_year(id: &str) -> Result<SchoolYear, String> {
 pub fn handle_delete_school_year(id: &str) -> Result<(), String> {
     delete_school_year(id)
 }
+
+pub fn get_guardians_by_student_id(student_id: &str) -> Result<Vec<crate::db::models::Guardian>, String> {
+    with_db(|conn| {
+        let mut stmt = conn.prepare(
+            "SELECT id, student_id, name, relation, phone, profession, is_emergency_contact, created_at 
+             FROM guardians 
+             WHERE student_id = ?1 
+             ORDER BY is_emergency_contact DESC, created_at ASC"
+        )?;
+
+        let guardians = stmt
+            .query_map(params![student_id], |row| {
+                Ok(crate::db::models::Guardian {
+                    id: row.get(0)?,
+                    student_id: row.get(1)?,
+                    name: row.get(2)?,
+                    relation: row.get(3)?,
+                    phone: row.get(4)?,
+                    profession: row.get(5)?,
+                    is_emergency_contact: row.get::<_, i32>(6)? == 1,
+                    created_at: row.get(7)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(guardians)
+    })
+}
+
+pub fn create_guardian(
+    student_id: &str,
+    name: &str,
+    relation: &str,
+    phone: &str,
+    profession: Option<&str>,
+    is_emergency_contact: bool,
+) -> Result<crate::db::models::Guardian, String> {
+    let id = crate::db::models::generate_id();
+    let created_at = crate::db::models::current_timestamp();
+
+    with_db(|conn| {
+        conn.execute(
+            "INSERT INTO guardians (id, student_id, name, relation, phone, profession, is_emergency_contact, created_at) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            params![
+                id,
+                student_id,
+                name,
+                relation,
+                phone,
+                profession,
+                if is_emergency_contact { 1 } else { 0 },
+                created_at
+            ],
+        )?;
+
+        Ok(crate::db::models::Guardian {
+            id,
+            student_id: student_id.to_string(),
+            name: name.to_string(),
+            relation: relation.to_string(),
+            phone: phone.to_string(),
+            profession: profession.map(|p| p.to_string()),
+            is_emergency_contact,
+            created_at,
+        })
+    })
+}
+
+pub fn update_guardian(
+    id: &str,
+    name: &str,
+    relation: &str,
+    phone: &str,
+    profession: Option<&str>,
+    is_emergency_contact: bool,
+) -> Result<crate::db::models::Guardian, String> {
+    with_db(|conn| {
+        let rows = conn.execute(
+            "UPDATE guardians SET name = ?1, relation = ?2, phone = ?3, profession = ?4, is_emergency_contact = ?5 
+             WHERE id = ?6",
+            params![
+                name,
+                relation,
+                phone,
+                profession,
+                if is_emergency_contact { 1 } else { 0 },
+                id
+            ],
+        )?;
+
+        if rows == 0 {
+            return Err("Responsable non trouvé".to_string());
+        }
+
+        Ok(crate::db::models::Guardian {
+            id: id.to_string(),
+            student_id: "".to_string(), // Will be fetched separately if needed
+            name: name.to_string(),
+            relation: relation.to_string(),
+            phone: phone.to_string(),
+            profession: profession.map(|p| p.to_string()),
+            is_emergency_contact,
+            created_at: "".to_string(),
+        })
+    })
+}
+
+pub fn delete_guardian(id: &str) -> Result<(), String> {
+    with_db(|conn| {
+        let rows = conn.execute("DELETE FROM guardians WHERE id = ?1", params![id])?;
+
+        if rows == 0 {
+            return Err("Responsable non trouvé".to_string());
+        }
+
+        Ok(())
+    })
+}
+
+pub fn handle_get_guardians_by_student_id(student_id: &str) -> Result<Vec<crate::db::models::Guardian>, String> {
+    get_guardians_by_student_id(student_id)
+}
+
+pub fn handle_create_guardian(
+    student_id: &str,
+    name: &str,
+    relation: &str,
+    phone: &str,
+    profession: Option<&str>,
+    is_emergency_contact: bool,
+) -> Result<crate::db::models::Guardian, String> {
+    create_guardian(student_id, name, relation, phone, profession, is_emergency_contact)
+}
+
+pub fn handle_update_guardian(
+    id: &str,
+    name: &str,
+    relation: &str,
+    phone: &str,
+    profession: Option<&str>,
+    is_emergency_contact: bool,
+) -> Result<crate::db::models::Guardian, String> {
+    update_guardian(id, name, relation, phone, profession, is_emergency_contact)
+}
+
+pub fn handle_delete_guardian(id: &str) -> Result<(), String> {
+    delete_guardian(id)
+}
